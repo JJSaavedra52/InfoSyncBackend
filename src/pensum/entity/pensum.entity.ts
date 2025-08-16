@@ -3,8 +3,6 @@ import { Entity, ObjectIdColumn, ObjectId, Column } from 'typeorm';
 export interface Course {
   name: string;
   type: 'B' | 'E'; // B = Basic, E = Elective
-  // credits?: number;
-  // code?: string;
 }
 
 export interface Semester {
@@ -20,8 +18,8 @@ export class Pensum {
   @Column()
   name: string;
 
-  // @Column()
-  // totalCredits?: number;
+  @Column()
+  totalSemesters: number;
 
   @Column()
   semesters: Semester[];
@@ -31,14 +29,4 @@ export class Pensum {
 
   @Column()
   updatedAt: Date;
-
-  constructor() {
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
-    // Initialize 9 empty semesters
-    this.semesters = Array.from({ length: 9 }, (_, index) => ({
-      semesterNumber: index + 1,
-      courses: [],
-    }));
-  }
 }

@@ -3,7 +3,6 @@ import {
   IsNotEmpty,
   Length,
   IsEnum,
-  //IsOptional(),
   IsNumber,
   Min,
   Max,
@@ -12,7 +11,7 @@ import {
 export class AddCourseDto {
   @IsNumber()
   @Min(1)
-  @Max(9)
+  @Max(12)
   semesterNumber: number;
 
   @IsString()
@@ -22,12 +21,4 @@ export class AddCourseDto {
 
   @IsEnum(['B', 'E'])
   courseType: 'B' | 'E';
-
-  /*@IsOptional()
-  @IsNumber()
-  credits?: number;
-
-  @IsOptional()
-  @IsString()
-  code?: string;*/
 }

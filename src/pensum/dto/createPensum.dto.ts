@@ -33,7 +33,7 @@ export class CourseDto {
 export class SemesterDto {
   @IsNumber()
   @Min(1)
-  @Max(9)
+  @Max(12)
   semesterNumber: number;
 
   @IsArray()
@@ -47,6 +47,12 @@ export class CreatePensumDto {
   @Length(2, 50)
   @IsNotEmpty()
   name: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(12)
+  totalSemesters?: number;
 
   // @IsOptional()
   // @IsNumber()
