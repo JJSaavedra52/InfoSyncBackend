@@ -1,23 +1,31 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PensumController } from './pensum.controller';
-import { APP_PIPE } from '@nestjs/core';
 import { PensumService } from './pensum.service';
 import { MongoModule } from 'src/database/mongo.module';
 import { Pensum } from './entity/pensum.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import {
+  IsUniquePensumNameConstraint,
+  HasMinimumCoursesPerSemesterConstraint,
+  HasUniqueCoursesAcrossSemestersConstraint,
+} from './validators/pensum.validators';
 
 @Module({
-  imports: [
-    MongoModule,
-    TypeOrmModule.forFeature([Pensum]), // This is crucial for MongoDB entities
-  ],
+  imports: [MongoModule, TypeOrmModule.forFeature([Pensum])],
   controllers: [PensumController],
   providers: [
-    {
-      provide: APP_PIPE,
-      useClass: ValidationPipe,
-    },
     PensumService,
+    {
+      provide: IsUniquePensumNameConstraint,
+      useFactory: (pensumRepository) => {
+        console.log('Creating IsUniquePensumNameConstraint with repository'); // Debug log
+        return new IsUniquePensumNameConstraint(pensumRepository);
+      },
+      inject: [getRepositoryToken(Pensum)],
+    },
+    HasMinimumCoursesPerSemesterConstraint,
+    HasUniqueCoursesAcrossSemestersConstraint,
   ],
 })
 export class PensumModule {}

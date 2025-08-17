@@ -1,6 +1,6 @@
 /*eslint-disable @typescript-eslint/no-unused-vars */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
@@ -16,7 +16,6 @@ export class PensumService {
     private pensumRepository: MongoRepository<Pensum>,
   ) {}
 
-  // Helper method to create empty semesters
   private createEmptySemesters(count: number) {
     return Array.from({ length: count }, (_, index) => ({
       semesterNumber: index + 1,
@@ -24,10 +23,24 @@ export class PensumService {
     }));
   }
 
+  private async validateUniqueName(name: string): Promise<void> {
+    const existingPensum = await this.pensumRepository.findOne({
+      where: { name } as any,
+    });
+
+    if (existingPensum) {
+      throw new BadRequestException('Pensum name already exists');
+    }
+  }
+
+  // ... other methods
+
   async create(createPensumDto: CreatePensumDto): Promise<Pensum> {
+    // Manual validation for unique name
+    await this.validateUniqueName(createPensumDto.name);
+
     const totalSemesters = createPensumDto.totalSemesters || 9;
 
-    // If semesters are provided in the DTO, use them; otherwise create empty ones
     const semesters =
       createPensumDto.semesters && createPensumDto.semesters.length > 0
         ? createPensumDto.semesters
@@ -36,12 +49,10 @@ export class PensumService {
     const pensum = this.pensumRepository.create({
       name: createPensumDto.name,
       totalSemesters,
-      semesters: semesters, // Use the semesters from DTO or empty ones
+      semesters: semesters,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
-    console.log('Creating pensum with semesters:', semesters); // Debug log
 
     return await this.pensumRepository.save(pensum);
   }
