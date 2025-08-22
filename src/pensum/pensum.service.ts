@@ -16,6 +16,7 @@ export class PensumService {
     private pensumRepository: MongoRepository<Pensum>,
   ) {}
 
+  // Helper method to create empty semesters
   private createEmptySemesters(count: number) {
     return Array.from({ length: count }, (_, index) => ({
       semesterNumber: index + 1,
@@ -23,6 +24,7 @@ export class PensumService {
     }));
   }
 
+  // Validation methods
   private async validateUniqueName(name: string): Promise<void> {
     const existingPensum = await this.pensumRepository.findOne({
       where: { name } as any,
@@ -33,11 +35,62 @@ export class PensumService {
     }
   }
 
-  // ... other methods
+  private validateMinimumSemesters(semesters: any[]): void {
+    if (!semesters || semesters.length < 9) {
+      throw new BadRequestException('Pensum must have at least 9 semesters');
+    }
+  }
+
+  private validateMinimumCoursesPerSemester(semesters: any[]): void {
+    if (!semesters) return;
+
+    const invalidSemesters = semesters.filter(
+      (semester) => !semester.courses || semester.courses.length < 5,
+    );
+
+    if (invalidSemesters.length > 0) {
+      const semesterNumbers = invalidSemesters
+        .map((s) => s.semesterNumber)
+        .join(', ');
+      throw new BadRequestException(
+        `All semesters must have at least 5 courses. Invalid semesters: ${semesterNumbers}`,
+      );
+    }
+  }
+
+  private validateUniqueCoursesAcrossSemesters(semesters: any[]): void {
+    if (!semesters) return;
+
+    const allCourseNames: string[] = [];
+    const duplicates: string[] = [];
+
+    for (const semester of semesters) {
+      if (semester.courses) {
+        for (const course of semester.courses) {
+          if (allCourseNames.includes(course.name)) {
+            if (!duplicates.includes(course.name)) {
+              duplicates.push(course.name);
+            }
+          } else {
+            allCourseNames.push(course.name);
+          }
+        }
+      }
+    }
+
+    if (duplicates.length > 0) {
+      throw new BadRequestException(
+        `Duplicate courses found: ${duplicates.join(', ')}`,
+      );
+    }
+  }
 
   async create(createPensumDto: CreatePensumDto): Promise<Pensum> {
-    // Manual validation for unique name
+    // Run all validations
     await this.validateUniqueName(createPensumDto.name);
+    this.validateMinimumSemesters(createPensumDto.semesters);
+    this.validateMinimumCoursesPerSemester(createPensumDto.semesters);
+    this.validateUniqueCoursesAcrossSemesters(createPensumDto.semesters);
 
     const totalSemesters = createPensumDto.totalSemesters || 9;
 
@@ -93,9 +146,6 @@ export class PensumService {
     }
   }
 
-  // Course methods
-
-  // (C)
   async addCourse(id: string, addCourseDto: AddCourseDto): Promise<Pensum> {
     const pensum = await this.findOne(id);
 
@@ -119,7 +169,28 @@ export class PensumService {
     return await this.update(id, { semesters: pensum.semesters });
   }
 
-  // (R) Find a specific course in a specific semester
+  async removeCourse(
+    id: string,
+    semesterNumber: number,
+    courseName: string,
+  ): Promise<Pensum> {
+    const pensum = await this.findOne(id);
+
+    const semester = pensum.semesters.find(
+      (s) => s.semesterNumber === semesterNumber,
+    );
+    if (!semester) {
+      throw new NotFoundException(`Semester ${semesterNumber} not found`);
+    }
+
+    semester.courses = semester.courses.filter(
+      (course) => course.name !== courseName,
+    );
+
+    return await this.update(id, { semesters: pensum.semesters });
+  }
+
+  // Add the missing methods your controller is calling
   async findOneCourse(id: string, semesterNumber: number, courseName: string) {
     const pensum = await this.findOne(id);
 
@@ -144,7 +215,6 @@ export class PensumService {
     };
   }
 
-  // (R) Find all courses in a specific semester
   async findAllCoursesInSemester(id: string, semesterNumber: number) {
     const pensum = await this.findOne(id);
 
@@ -164,7 +234,6 @@ export class PensumService {
     };
   }
 
-  // (U) Update a specific course
   async updateCourse(
     id: string,
     semesterNumber: number,
@@ -194,28 +263,6 @@ export class PensumService {
       name: updateCourseDto.courseName,
       type: updateCourseDto.courseType,
     };
-
-    return await this.update(id, { semesters: pensum.semesters });
-  }
-
-  // (D) Remove a course from a specific semester in a specific pensum
-  async removeCourse(
-    id: string,
-    semesterNumber: number,
-    courseName: string,
-  ): Promise<Pensum> {
-    const pensum = await this.findOne(id);
-
-    const semester = pensum.semesters.find(
-      (s) => s.semesterNumber === semesterNumber,
-    );
-    if (!semester) {
-      throw new NotFoundException(`Semester ${semesterNumber} not found`);
-    }
-
-    semester.courses = semester.courses.filter(
-      (course) => course.name !== courseName,
-    );
 
     return await this.update(id, { semesters: pensum.semesters });
   }

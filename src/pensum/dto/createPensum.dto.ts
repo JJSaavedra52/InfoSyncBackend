@@ -12,11 +12,6 @@ import {
   ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  IsUniquePensumName,
-  HasMinimumCoursesPerSemester,
-  HasUniqueCoursesAcrossSemesters,
-} from '../validators/pensum.validators';
 
 export class CourseDto {
   @IsString()
@@ -44,7 +39,6 @@ export class CreatePensumDto {
   @IsString()
   @Length(2, 50)
   @IsNotEmpty()
-  // @IsUniquePensumName() // Custom validation
   name: string;
 
   @IsOptional()
@@ -54,10 +48,8 @@ export class CreatePensumDto {
   totalSemesters?: number;
 
   @IsArray()
-  @ArrayMinSize(9, { message: 'Pensum must have at least 9 semesters' }) // Use this instead
+  @ArrayMinSize(9, { message: 'Pensum must have at least 9 semesters' })
   @ValidateNested({ each: true })
   @Type(() => SemesterDto)
-  @HasMinimumCoursesPerSemester() // Custom validation
-  @HasUniqueCoursesAcrossSemesters() // Custom validation
   semesters: SemesterDto[];
 }
