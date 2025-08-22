@@ -9,6 +9,7 @@ import {
   IsNumber,
   Min,
   Max,
+  ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -20,14 +21,6 @@ export class CourseDto {
 
   @IsEnum(['B', 'E'])
   type: 'B' | 'E';
-
-  // @IsOptional()
-  // @IsNumber()
-  // credits?: number;
-
-  // @IsOptional()
-  // @IsString()
-  // code?: string;
 }
 
 export class SemesterDto {
@@ -50,17 +43,13 @@ export class CreatePensumDto {
 
   @IsOptional()
   @IsNumber()
-  @Min(1)
+  @Min(9)
   @Max(12)
   totalSemesters?: number;
 
-  // @IsOptional()
-  // @IsNumber()
-  // totalCredits?: number;
-
-  @IsOptional()
   @IsArray()
+  @ArrayMinSize(9, { message: 'Pensum must have at least 9 semesters' })
   @ValidateNested({ each: true })
   @Type(() => SemesterDto)
-  semesters?: SemesterDto[];
+  semesters: SemesterDto[];
 }

@@ -1,5 +1,4 @@
-/*eslint-disable @typescript-eslint/no-unused-vars */
-
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
@@ -8,40 +7,29 @@ import { Pensum } from './entity/pensum.entity';
 import { CreatePensumDto } from './dto/createPensum.dto';
 import { UpdatePensumDto } from './dto/updatePensum.dto';
 import { AddCourseDto } from './dto/addCourse.dto';
+import { PensumValidationService } from './validators/pensum-validation.service'; // Add this import
 
 @Injectable()
 export class PensumService {
   constructor(
     @InjectRepository(Pensum)
     private pensumRepository: MongoRepository<Pensum>,
+    private pensumValidationService: PensumValidationService, // Inject the validation service
   ) {}
 
-  // Helper method to create empty semesters
-  private createEmptySemesters(count: number) {
-    return Array.from({ length: count }, (_, index) => ({
-      semesterNumber: index + 1,
-      courses: [],
-    }));
-  }
-
   async create(createPensumDto: CreatePensumDto): Promise<Pensum> {
-    const totalSemesters = createPensumDto.totalSemesters || 9;
+    // Run all validations
+    await this.pensumValidationService.validatePensumCreation(createPensumDto);
 
-    // If semesters are provided in the DTO, use them; otherwise create empty ones
-    const semesters =
-      createPensumDto.semesters && createPensumDto.semesters.length > 0
-        ? createPensumDto.semesters
-        : this.createEmptySemesters(totalSemesters);
+    const totalSemesters = createPensumDto.totalSemesters || 9;
 
     const pensum = this.pensumRepository.create({
       name: createPensumDto.name,
       totalSemesters,
-      semesters: semesters, // Use the semesters from DTO or empty ones
+      semesters: createPensumDto.semesters,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
-    console.log('Creating pensum with semesters:', semesters); // Debug log
 
     return await this.pensumRepository.save(pensum);
   }
@@ -72,7 +60,7 @@ export class PensumService {
     return await this.findOne(id);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<{ message: string }> {
     const result = await this.pensumRepository.delete({
       _id: new ObjectId(id),
     } as any);
@@ -80,11 +68,10 @@ export class PensumService {
     if (result.affected === 0) {
       throw new NotFoundException(`Pensum with ID ${id} not found`);
     }
+
+    return { message: `Pensum with ID ${id} has been successfully deleted` };
   }
 
-  // Course methods
-
-  // (C)
   async addCourse(id: string, addCourseDto: AddCourseDto): Promise<Pensum> {
     const pensum = await this.findOne(id);
 
@@ -108,7 +95,28 @@ export class PensumService {
     return await this.update(id, { semesters: pensum.semesters });
   }
 
-  // (R) Find a specific course in a specific semester
+  async removeCourse(
+    id: string,
+    semesterNumber: number,
+    courseName: string,
+  ): Promise<Pensum> {
+    const pensum = await this.findOne(id);
+
+    const semester = pensum.semesters.find(
+      (s) => s.semesterNumber === semesterNumber,
+    );
+    if (!semester) {
+      throw new NotFoundException(`Semester ${semesterNumber} not found`);
+    }
+
+    semester.courses = semester.courses.filter(
+      (course) => course.name !== courseName,
+    );
+
+    return await this.update(id, { semesters: pensum.semesters });
+  }
+
+  // Add the missing methods your controller is calling
   async findOneCourse(id: string, semesterNumber: number, courseName: string) {
     const pensum = await this.findOne(id);
 
@@ -133,7 +141,6 @@ export class PensumService {
     };
   }
 
-  // (R) Find all courses in a specific semester
   async findAllCoursesInSemester(id: string, semesterNumber: number) {
     const pensum = await this.findOne(id);
 
@@ -153,7 +160,6 @@ export class PensumService {
     };
   }
 
-  // (U) Update a specific course
   async updateCourse(
     id: string,
     semesterNumber: number,
@@ -183,28 +189,6 @@ export class PensumService {
       name: updateCourseDto.courseName,
       type: updateCourseDto.courseType,
     };
-
-    return await this.update(id, { semesters: pensum.semesters });
-  }
-
-  // (D) Remove a course from a specific semester in a specific pensum
-  async removeCourse(
-    id: string,
-    semesterNumber: number,
-    courseName: string,
-  ): Promise<Pensum> {
-    const pensum = await this.findOne(id);
-
-    const semester = pensum.semesters.find(
-      (s) => s.semesterNumber === semesterNumber,
-    );
-    if (!semester) {
-      throw new NotFoundException(`Semester ${semesterNumber} not found`);
-    }
-
-    semester.courses = semester.courses.filter(
-      (course) => course.name !== courseName,
-    );
 
     return await this.update(id, { semesters: pensum.semesters });
   }
