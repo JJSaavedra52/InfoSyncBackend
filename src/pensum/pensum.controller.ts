@@ -47,7 +47,7 @@ export class PensumController {
 
   // (D) Delete a specific pensum
   @Delete(':id')
-  @HttpCode(204)
+  @HttpCode(200)
   remove(@Param('id') id: string) {
     return this.pensumService.delete(id);
   }

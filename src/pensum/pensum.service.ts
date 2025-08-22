@@ -1,6 +1,5 @@
-/*eslint-disable @typescript-eslint/no-unused-vars */
-
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
@@ -8,101 +7,26 @@ import { Pensum } from './entity/pensum.entity';
 import { CreatePensumDto } from './dto/createPensum.dto';
 import { UpdatePensumDto } from './dto/updatePensum.dto';
 import { AddCourseDto } from './dto/addCourse.dto';
+import { PensumValidationService } from './validators/pensum-validation.service'; // Add this import
 
 @Injectable()
 export class PensumService {
   constructor(
     @InjectRepository(Pensum)
     private pensumRepository: MongoRepository<Pensum>,
+    private pensumValidationService: PensumValidationService, // Inject the validation service
   ) {}
-
-  // Helper method to create empty semesters
-  private createEmptySemesters(count: number) {
-    return Array.from({ length: count }, (_, index) => ({
-      semesterNumber: index + 1,
-      courses: [],
-    }));
-  }
-
-  // Validation methods
-  private async validateUniqueName(name: string): Promise<void> {
-    const existingPensum = await this.pensumRepository.findOne({
-      where: { name } as any,
-    });
-
-    if (existingPensum) {
-      throw new BadRequestException('Pensum name already exists');
-    }
-  }
-
-  private validateMinimumSemesters(semesters: any[]): void {
-    if (!semesters || semesters.length < 9) {
-      throw new BadRequestException('Pensum must have at least 9 semesters');
-    }
-  }
-
-  private validateMinimumCoursesPerSemester(semesters: any[]): void {
-    if (!semesters) return;
-
-    const invalidSemesters = semesters.filter(
-      (semester) => !semester.courses || semester.courses.length < 5,
-    );
-
-    if (invalidSemesters.length > 0) {
-      const semesterNumbers = invalidSemesters
-        .map((s) => s.semesterNumber)
-        .join(', ');
-      throw new BadRequestException(
-        `All semesters must have at least 5 courses. Invalid semesters: ${semesterNumbers}`,
-      );
-    }
-  }
-
-  private validateUniqueCoursesAcrossSemesters(semesters: any[]): void {
-    if (!semesters) return;
-
-    const allCourseNames: string[] = [];
-    const duplicates: string[] = [];
-
-    for (const semester of semesters) {
-      if (semester.courses) {
-        for (const course of semester.courses) {
-          if (allCourseNames.includes(course.name)) {
-            if (!duplicates.includes(course.name)) {
-              duplicates.push(course.name);
-            }
-          } else {
-            allCourseNames.push(course.name);
-          }
-        }
-      }
-    }
-
-    if (duplicates.length > 0) {
-      throw new BadRequestException(
-        `Duplicate courses found: ${duplicates.join(', ')}`,
-      );
-    }
-  }
 
   async create(createPensumDto: CreatePensumDto): Promise<Pensum> {
     // Run all validations
-    await this.validateUniqueName(createPensumDto.name);
-    this.validateMinimumSemesters(createPensumDto.semesters);
-    this.validateMinimumCoursesPerSemester(createPensumDto.semesters);
-    this.validateUniqueCoursesAcrossSemesters(createPensumDto.semesters);
+    await this.pensumValidationService.validatePensumCreation(createPensumDto);
 
     const totalSemesters = createPensumDto.totalSemesters || 9;
-
-    const semesters =
-      createPensumDto.semesters && createPensumDto.semesters.length > 0
-        ? createPensumDto.semesters
-        : this.createEmptySemesters(totalSemesters);
 
     const pensum = this.pensumRepository.create({
       name: createPensumDto.name,
       totalSemesters,
-      semesters: semesters,
+      semesters: createPensumDto.semesters,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -136,7 +60,7 @@ export class PensumService {
     return await this.findOne(id);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<{ message: string }> {
     const result = await this.pensumRepository.delete({
       _id: new ObjectId(id),
     } as any);
@@ -144,6 +68,8 @@ export class PensumService {
     if (result.affected === 0) {
       throw new NotFoundException(`Pensum with ID ${id} not found`);
     }
+
+    return { message: `Pensum with ID ${id} has been successfully deleted` };
   }
 
   async addCourse(id: string, addCourseDto: AddCourseDto): Promise<Pensum> {
