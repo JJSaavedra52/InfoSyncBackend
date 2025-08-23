@@ -30,6 +30,44 @@ export class PensumValidationService {
     }
   }
 
+  // NEW: Validate that totalSemesters matches the actual semesters array length
+  validateTotalSemestersConsistency(
+    semesters: any[],
+    totalSemesters?: number,
+  ): void {
+    if (totalSemesters && semesters) {
+      if (semesters.length !== totalSemesters) {
+        throw new BadRequestException(
+          `Total semesters (${totalSemesters}) must match the number of semesters provided (${semesters.length})`,
+        );
+      }
+    }
+  }
+
+  // NEW: Validate that semester numbers are sequential and correct
+  validateSemesterNumbers(semesters: any[]): void {
+    if (!semesters) return;
+
+    const semesterNumbers = semesters
+      .map((s) => s.semesterNumber)
+      .sort((a, b) => a - b);
+
+    // Check for duplicates
+    const uniqueNumbers = [...new Set(semesterNumbers)];
+    if (uniqueNumbers.length !== semesterNumbers.length) {
+      throw new BadRequestException('Duplicate semester numbers found');
+    }
+
+    // Check for sequential numbers starting from 1
+    for (let i = 0; i < semesterNumbers.length; i++) {
+      if (semesterNumbers[i] !== i + 1) {
+        throw new BadRequestException(
+          `Semester numbers must be sequential starting from 1. Missing or incorrect: ${i + 1}`,
+        );
+      }
+    }
+  }
+
   validateMinimumCoursesPerSemester(semesters: any[]): void {
     if (!semesters) {
       throw new BadRequestException(
@@ -37,7 +75,6 @@ export class PensumValidationService {
       );
     }
 
-    // EVERY semester must have at least 5 courses - NO EXCEPTIONS
     const invalidSemesters = semesters.filter(
       (semester) => !semester.courses || semester.courses.length < 5,
     );
@@ -79,11 +116,16 @@ export class PensumValidationService {
     }
   }
 
-  // Method to validate all creation rules at once
+  // Updated method with new validations
   async validatePensumCreation(createPensumDto: any): Promise<void> {
     await this.validateUniqueName(createPensumDto.name);
     this.validateMinimumSemesters(createPensumDto.semesters);
-    this.validateMinimumCoursesPerSemester(createPensumDto.semesters); // This will now fail if no semesters or empty semesters
+    this.validateSemesterNumbers(createPensumDto.semesters); // NEW
+    this.validateTotalSemestersConsistency(
+      createPensumDto.semesters,
+      createPensumDto.totalSemesters,
+    );
+    this.validateMinimumCoursesPerSemester(createPensumDto.semesters);
     this.validateUniqueCoursesAcrossSemesters(createPensumDto.semesters);
   }
 }
