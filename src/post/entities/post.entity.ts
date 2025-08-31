@@ -6,7 +6,16 @@ export class Post {
   _id: ObjectId;
 
   @Column()
+  userId: string;
+
+  @Column()
+  type: 'Q' | 'S'; // Q = Question, S= Suggestion
+
+  @Column()
   title: string;
+
+  @Column()
+  subject: string;
 
   @Column()
   description: string;

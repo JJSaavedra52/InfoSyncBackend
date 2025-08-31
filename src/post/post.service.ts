@@ -1,26 +1,60 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { MongoRepository } from 'typeorm';
+import { ObjectId } from 'mongodb';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { Post } from './entities/post.entity';
 
 @Injectable()
 export class PostService {
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+  constructor(
+    @InjectRepository(Post)
+    private postRepository: MongoRepository<Post>,
+  ) {}
+
+  async create(createPostDto: CreatePostDto): Promise<Post> {
+    const newPost = this.postRepository.create({
+      ...createPostDto,
+      images: createPostDto.images || [],
+      files: createPostDto.files || [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    return await this.postRepository.save(newPost);
   }
 
-  findAll() {
-    return `This action returns all post`;
+  async findAll(): Promise<Post[]> {
+    return await this.postRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
+  async findOne(id: string): Promise<Post> {
+    const post = await this.postRepository.findOne({
+      where: { _id: new ObjectId(id) } as any,
+    });
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+    return post;
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+  async update(id: string, updatePostDto: UpdatePostDto): Promise<Post> {
+    await this.postRepository.update({ _id: new ObjectId(id) } as any, {
+      ...updatePostDto,
+      updatedAt: new Date(),
+    });
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async remove(id: string): Promise<{ message: string }> {
+    const result = await this.postRepository.delete({
+      _id: new ObjectId(id),
+    } as any);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+    return { message: `Post with ID ${id} has been deleted` };
   }
 }
