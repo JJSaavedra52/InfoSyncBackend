@@ -21,6 +21,9 @@ export class Post {
   description: string;
 
   @Column()
+  pensumId: string;
+
+  @Column()
   course: string;
 
   @Column({ type: 'array', default: [] })
