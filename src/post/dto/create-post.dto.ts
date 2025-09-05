@@ -67,6 +67,14 @@ export class CreatePostDto {
   @Length(10, 1000)
   description: string;
 
+  @ApiProperty({
+    description: 'Pensum ID related to the post',
+    example: '64f8a1234567890abcdef123',
+  })
+  @IsString()
+  @IsNotEmpty()
+  pensumId: string;
+
   // Example
   @ApiProperty({
     description: 'Course related to the post',

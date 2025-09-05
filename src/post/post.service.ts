@@ -6,16 +6,24 @@ import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { Post } from './entities/post.entity';
+import { Post } from './entity/post.entity';
+import { PostValidationService } from './validators/post-validation.service';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(Post)
     private postRepository: MongoRepository<Post>,
+    private postValidationService: PostValidationService,
   ) {}
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
+    // Validate pensum and course
+    await this.postValidationService.validatePostCreation(
+      createPostDto.pensumId,
+      createPostDto.course,
+    );
+
     const newPost = this.postRepository.create({
       ...createPostDto,
       images: createPostDto.images || [],
