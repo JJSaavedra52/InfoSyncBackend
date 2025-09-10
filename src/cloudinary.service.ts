@@ -17,7 +17,11 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       v2.uploader.upload(filePath, { folder: 'infosync' }, (error, result) => {
         if (error) return reject(error);
-        resolve(result);
+        if (result) {
+          resolve(result);
+        } else {
+          reject(new Error('Upload failed: result is undefined'));
+        }
       });
     });
   }
