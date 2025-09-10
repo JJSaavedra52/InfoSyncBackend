@@ -50,18 +50,6 @@ export class PostController {
     console.log('Received images:', files.images);
     console.log('Received files:', files.files);
 
-    // Log each file path before uploading
-    for (const file of files.images || []) {
-      console.log('Uploading image:', file.path);
-      const uploadResult = await this.cloudinaryService.uploadImage(file.path);
-      // ...
-    }
-    for (const file of files.files || []) {
-      console.log('Uploading file:', file.path);
-      const uploadResult = await this.cloudinaryService.uploadImage(file.path);
-      // ...
-    }
-
     // Upload images to Cloudinary
     const imageUrls: string[] = [];
     for (const file of files.images || []) {
