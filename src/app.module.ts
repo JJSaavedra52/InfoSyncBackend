@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { PensumModule } from './pensum/pensum.module';
 import { PostModule } from './post/post.module';
 import { MulterModule } from '@nestjs/platform-express';
-import { CloudinaryService } from './cloudinary.service'
+import { CloudinaryService } from './cloudinary.service';
 import { ImageController } from './image.controller';
 
 @Module({

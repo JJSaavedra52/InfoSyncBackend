@@ -44,7 +44,7 @@ export class CreatePostDto {
   title: string;
 
   @ApiProperty({
-    description: 'Subject of the post',
+    description: 'Subject of the post (single word, no spaces)',
     example: 'Calculus',
   })
   // End Example
@@ -87,7 +87,7 @@ export class CreatePostDto {
 
   // Example
   @ApiPropertyOptional({
-    description: 'Array of image URLs',
+    description: 'Array of image URLs (Cloudinary or other storage)',
     type: [String],
     example: ['https://bucket.com/image1.png', 'https://bucket.com/image2.jpg'],
   })
@@ -99,7 +99,7 @@ export class CreatePostDto {
 
   // Example
   @ApiPropertyOptional({
-    description: 'Array of file URLs',
+    description: 'Array of file URLs (Cloudinary or other storage)',
     type: [String],
     example: ['https://bucket.com/file1.pdf'],
   })

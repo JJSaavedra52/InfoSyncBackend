@@ -14,15 +14,21 @@ export class CloudinaryService {
   async uploadImage(
     filePath: string,
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
+    console.log('File path:', filePath); // <-- Correct usage
+
     return new Promise((resolve, reject) => {
-      v2.uploader.upload(filePath, { folder: 'infosync' }, (error, result) => {
-        if (error) return reject(error);
-        if (result) {
-          resolve(result);
-        } else {
-          reject(new Error('Upload failed: result is undefined'));
-        }
-      });
+      v2.uploader.upload(
+        filePath,
+        { folder: 'infosync', resource_type: 'auto' },
+        (error, result) => {
+          if (error) return reject(error);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(new Error('Upload failed: result is undefined'));
+          }
+        },
+      );
     });
   }
 }
