@@ -10,6 +10,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://infosync-front-1.onrender.com', // <-- deployed frontend domain
+      'http://localhost:3000', // for local backend
+      'http://localhost:5173', // for local frontend (Vite/React default)
     ],
     credentials: true, // if you use cookies/auth
   });
