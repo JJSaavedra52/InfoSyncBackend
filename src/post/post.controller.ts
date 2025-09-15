@@ -16,7 +16,7 @@ import { PostService } from './post.service';
 import { CloudinaryService } from '../cloudinary.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 @Controller('post')
 export class PostController {
@@ -32,14 +32,7 @@ export class PostController {
         { name: 'images', maxCount: 10 },
         { name: 'files', maxCount: 10 },
       ],
-      {
-        storage: diskStorage({
-          destination: './uploads', // or any temp folder
-          filename: (req, file, cb) => {
-            cb(null, `${Date.now()}-${file.originalname}`);
-          },
-        }),
-      },
+      { storage: memoryStorage() },
     ),
   )
   async create(
@@ -47,21 +40,21 @@ export class PostController {
     @UploadedFiles()
     files: { images?: Express.Multer.File[]; files?: Express.Multer.File[] },
   ) {
-    // Log the files to debug
-    console.log('Received images:', files.images);
-    console.log('Received files:', files.files);
-
-    // Upload images to Cloudinary
     const imageUrls: string[] = [];
     for (const file of files.images || []) {
-      const uploadResult = await this.cloudinaryService.uploadImage(file.path);
+      const uploadResult = await this.cloudinaryService.uploadBuffer(
+        file.buffer,
+        file.originalname,
+      );
       imageUrls.push(uploadResult.secure_url);
     }
 
-    // Upload files to Cloudinary
     const fileUrls: string[] = [];
     for (const file of files.files || []) {
-      const uploadResult = await this.cloudinaryService.uploadImage(file.path);
+      const uploadResult = await this.cloudinaryService.uploadBuffer(
+        file.buffer,
+        file.originalname,
+      );
       fileUrls.push(uploadResult.secure_url);
     }
 
