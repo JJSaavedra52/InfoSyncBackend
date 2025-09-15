@@ -6,6 +6,14 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for your deployed frontend
+  app.enableCors({
+    origin: [
+      'https://infosync-front-1.onrender.com', // <-- deployed frontend domain
+    ],
+    credentials: true, // if you use cookies/auth
+  });
+
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe());
 
