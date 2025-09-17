@@ -8,6 +8,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 import { ImageController } from './image.controller';
 import { CommentModule } from './comment/comment.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CommentModule } from './comment/comment.module';
     PensumModule,
     PostModule,
     CommentModule,
+    ReportModule,
   ],
   controllers: [AppController, ImageController],
   providers: [AppService, CloudinaryService],
