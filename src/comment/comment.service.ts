@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Comment } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateSubCommentDto } from './dto/create-subcomment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ObjectId } from 'mongodb';
 
@@ -57,14 +58,30 @@ export class CommentService {
 
   async addSubComment(
     commentId: string,
-    subCommentDto: { userId: string; commentary: string },
+    subCommentDto: CreateSubCommentDto, // <-- Use the DTO type here
   ) {
     const comment = await this.findOne(commentId);
     if (!Array.isArray(comment.subComments)) comment.subComments = [];
     comment.subComments.push({
-      ...subCommentDto,
+      _id: new ObjectId(),
+      userId: subCommentDto.userId,
+      commentary: subCommentDto.commentary,
       createdAt: new Date(),
     });
+    await this.commentRepository.save(comment);
+    return comment;
+  }
+
+  async removeSubComment(commentId: string, subCommentId: string) {
+    const comment = await this.findOne(commentId);
+    if (!Array.isArray(comment.subComments)) comment.subComments = [];
+    const initialLength = comment.subComments.length;
+    comment.subComments = comment.subComments.filter(
+      (subComment) => subComment._id.toString() !== subCommentId,
+    );
+    if (comment.subComments.length === initialLength) {
+      throw new NotFoundException(`SubComment ${subCommentId} not found`);
+    }
     await this.commentRepository.save(comment);
     return comment;
   }

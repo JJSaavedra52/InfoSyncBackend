@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateSubCommentDto } from './dto/create-subcomment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentValidationService } from './validators/comment-validation.service';
 
@@ -53,8 +54,16 @@ export class CommentController {
   @Post(':id/subcomment')
   async addSubComment(
     @Param('id') id: string,
-    @Body() subCommentDto: { userId: string; commentary: string },
+    @Body() subCommentDto: CreateSubCommentDto, // <-- Use the DTO type here
   ) {
     return this.commentService.addSubComment(id, subCommentDto);
+  }
+
+  @Delete(':commentId/subcomment/:subCommentId')
+  async removeSubComment(
+    @Param('commentId') commentId: string,
+    @Param('subCommentId') subCommentId: string,
+  ) {
+    return this.commentService.removeSubComment(commentId, subCommentId);
   }
 }

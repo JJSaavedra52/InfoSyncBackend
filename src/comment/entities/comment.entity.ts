@@ -1,6 +1,9 @@
 import { Entity, ObjectIdColumn, ObjectId, Column } from 'typeorm';
 
 class SubComment {
+  @ObjectIdColumn()
+  _id: ObjectId; // Unique ID for each subcomment
+
   @Column()
   userId: string;
 
@@ -25,7 +28,7 @@ export class Comment {
   @Column()
   commentary: string;
 
-  @Column({ type: 'array', default: [] }) // <-- Ensure it's always an array
+  @Column({ type: 'array', default: [] })
   subComments: SubComment[];
 
   @Column({ default: 0 })
