@@ -66,4 +66,9 @@ export class CommentController {
   ) {
     return this.commentService.removeSubComment(commentId, subCommentId);
   }
+
+  @Get('post/:postId')
+  async findByPostId(@Param('postId') postId: string) {
+    return this.commentService.findByPostId(postId);
+  }
 }
