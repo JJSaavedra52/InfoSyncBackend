@@ -85,4 +85,10 @@ export class CommentService {
     await this.commentRepository.save(comment);
     return comment;
   }
+
+  async findByPostId(postId: string) {
+    return await this.commentRepository.find({
+      where: { postId },
+    });
+  }
 }
