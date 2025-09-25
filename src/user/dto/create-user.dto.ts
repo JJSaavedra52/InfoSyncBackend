@@ -1,9 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsEnum, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsEnum, MinLength, Matches } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty()
   @IsEmail()
+  @Matches(/^[\w.-]+@uao\.edu\.co$/, {
+    message: 'Email must be an institutional @uao.edu.co address',
+  })
   userEmail: string;
 
   @ApiProperty()

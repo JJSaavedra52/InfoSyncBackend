@@ -2,7 +2,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { User } from './entity/user.entity';
@@ -19,6 +23,19 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
+    // Check for duplicate email or username
+    const existingUser = await this.userRepository.findOne({
+      where: {
+        $or: [
+          { userEmail: createUserDto.userEmail },
+          { userName: createUserDto.userName },
+        ],
+      },
+    });
+    if (existingUser) {
+      throw new BadRequestException('Email or username already exists');
+    }
+
     const passwordHash = await bcrypt.hash(createUserDto.password, 10);
     const newUser = this.userRepository.create({
       ...createUserDto,

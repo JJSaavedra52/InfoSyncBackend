@@ -78,7 +78,42 @@ export class PostController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'images', maxCount: 10 },
+        { name: 'files', maxCount: 10 },
+      ],
+      { storage: memoryStorage() },
+    ),
+  )
+  async update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @UploadedFiles()
+    files: { images?: Express.Multer.File[]; files?: Express.Multer.File[] },
+  ) {
+    const imageUrls: string[] = [];
+    for (const file of files.images || []) {
+      const uploadResult = await this.cloudinaryService.uploadBuffer(
+        file.buffer,
+        file.originalname,
+      );
+      imageUrls.push(uploadResult.secure_url);
+    }
+
+    const fileUrls: string[] = [];
+    for (const file of files.files || []) {
+      const uploadResult = await this.cloudinaryService.uploadBuffer(
+        file.buffer,
+        file.originalname,
+      );
+      fileUrls.push(uploadResult.secure_url);
+    }
+
+    if (imageUrls.length) updatePostDto.images = imageUrls;
+    if (fileUrls.length) updatePostDto.files = fileUrls;
+
     return this.postService.update(id, updatePostDto);
   }
 
