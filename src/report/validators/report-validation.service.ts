@@ -3,7 +3,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Post } from '../../post/entity/post.entity';
-import { Comment } from '../../comment/entities/comment.entity';
+import { Comment } from '../../comment/entity/comment.entity';
 import { ObjectId } from 'mongodb';
 
 @Injectable()
