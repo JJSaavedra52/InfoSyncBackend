@@ -29,4 +29,7 @@ export class Pensum {
 
   @Column()
   updatedAt: Date;
+
+  @Column()
+  description?: string;
 }
