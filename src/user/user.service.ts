@@ -16,13 +16,15 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ObjectId } from 'mongodb';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { UserValidationService } from './validators/user-validation.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: MongoRepository<User>,
-    private jwtService: JwtService, // Inject JwtService
+    private jwtService: JwtService,
+    private userValidationService: UserValidationService, // Inject validation service
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -66,7 +68,8 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto, requesterId: string) {
+    await this.userValidationService.validateOwner(id, requesterId);
     if (updateUserDto.password) {
       updateUserDto.passwordHash = await bcrypt.hash(
         updateUserDto.password,
@@ -81,7 +84,20 @@ export class UserService {
     return await this.findOne(id);
   }
 
-  async remove(id: string) {
+  async updateStatus(
+    id: string,
+    status: 'active' | 'banned',
+    requesterRole: string, // This one is used below, so keep as is
+  ) {
+    await this.userValidationService.validateAdmin(requesterRole);
+    await this.userRepository.update({ _id: new ObjectId(id) } as any, {
+      status,
+    });
+    return await this.findOne(id);
+  }
+
+  async remove(id: string, requesterRole: string) {
+    await this.userValidationService.validateAdmin(requesterRole);
     await this.userRepository.delete({ _id: new ObjectId(id) } as any);
     return { message: `User ${id} deleted` };
   }
@@ -90,9 +106,8 @@ export class UserService {
     const user = await this.userRepository.findOne({
       where: { userEmail },
     });
-    if (!user || user.status !== 'active') {
-      throw new UnauthorizedException('Invalid credentials or user is banned');
-    }
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+    await this.userValidationService.validateActive(user);
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials');
