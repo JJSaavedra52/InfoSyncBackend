@@ -1,6 +1,5 @@
-import { PartialType } from '@nestjs/swagger'; // Change this import!
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreatePensumDto, SemesterDto } from './createPensum.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   Length,
@@ -10,10 +9,19 @@ import {
   IsNumber,
   Min,
   Max,
+  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdatePensumDto extends PartialType(CreatePensumDto) {
+  @ApiPropertyOptional({
+    description: 'User ID of the admin updating the pensum',
+    example: '64f8a1234567890abcdef123',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId?: string;
+
   @ApiPropertyOptional({
     description: 'Updated name of the pensum',
     example: 'Updated Computer Science Program 2024',

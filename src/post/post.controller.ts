@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Controller,
@@ -10,6 +11,7 @@ import {
   HttpCode,
   UploadedFiles,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { PostService } from './post.service';
@@ -17,7 +19,10 @@ import { CloudinaryService } from '../cloudinary.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { memoryStorage } from 'multer';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('post')
 export class PostController {
   constructor(
@@ -26,6 +31,11 @@ export class PostController {
   ) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Create a post',
+    description: 'Requires header: Authorization = Bearer your_jwt_token',
+  })
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -78,12 +88,66 @@ export class PostController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+  @ApiOperation({
+    summary: 'Update a post',
+    description: 'Requires header: Authorization = Bearer your_jwt_token',
+  })
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'images', maxCount: 10 },
+        { name: 'files', maxCount: 10 },
+      ],
+      { storage: memoryStorage() },
+    ),
+  )
+  async update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @UploadedFiles()
+    files: { images?: Express.Multer.File[]; files?: Express.Multer.File[] },
+  ) {
+    const imageUrls: string[] = [];
+    for (const file of files.images || []) {
+      const uploadResult = await this.cloudinaryService.uploadBuffer(
+        file.buffer,
+        file.originalname,
+      );
+      imageUrls.push(uploadResult.secure_url);
+    }
+
+    const fileUrls: string[] = [];
+    for (const file of files.files || []) {
+      const uploadResult = await this.cloudinaryService.uploadBuffer(
+        file.buffer,
+        file.originalname,
+      );
+      fileUrls.push(uploadResult.secure_url);
+    }
+
+    if (imageUrls.length) updatePostDto.images = imageUrls;
+    if (fileUrls.length) updatePostDto.files = fileUrls;
+
     return this.postService.update(id, updatePostDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postService.remove(id);
+  @ApiOperation({
+    summary: 'Delete a post',
+    description: 'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
+      },
+      required: ['userId'],
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string, @Body('userId') userId: string) {
+    return this.postService.remove(id, userId);
   }
 }

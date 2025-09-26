@@ -10,6 +10,14 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class AddCourseDto {
   @ApiProperty({
+    description: 'User ID of the admin adding the course',
+    example: '64f8a1234567890abcdef123',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
     description: 'Semester number where the course will be added',
     example: 1,
     minimum: 1,

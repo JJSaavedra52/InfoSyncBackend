@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -9,6 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Pensum } from '../../pensum/entity/pensum.entity';
+import { User } from '../../user/entity/user.entity'; // Import User entity
 import { ObjectId } from 'mongodb';
 
 @Injectable()
@@ -16,6 +18,8 @@ export class PostValidationService {
   constructor(
     @InjectRepository(Pensum)
     private pensumRepository: MongoRepository<Pensum>,
+    @InjectRepository(User)
+    private userRepository: MongoRepository<User>, // Inject User repository
   ) {}
 
   async validatePensumExists(pensumId: string): Promise<Pensum> {
@@ -51,5 +55,38 @@ export class PostValidationService {
   ): Promise<void> {
     const pensum = await this.validatePensumExists(pensumId);
     this.validateCourseInPensum(pensum, courseName);
+  }
+
+  async validateUserExists(userId: string): Promise<User> {
+    if (!ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid userId format');
+    }
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) } as any,
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async validateUserCanModifyPost(post: any, userId: string): Promise<void> {
+    // const user = await this.validateUserExists(userId);
+    // Only the creator can update
+    if (post.userId !== userId) {
+      throw new BadRequestException(
+        'Only the post creator can update this post',
+      );
+    }
+  }
+
+  async validateUserCanDeletePost(post: any, userId: string): Promise<void> {
+    const user = await this.validateUserExists(userId);
+    // Allow creator or admin to delete
+    if (post.userId !== userId && user.role !== 'admin') {
+      throw new BadRequestException(
+        'Only the creator or an admin can delete this post',
+      );
+    }
   }
 }

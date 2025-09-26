@@ -9,6 +9,8 @@ import { CloudinaryService } from './cloudinary.service';
 import { ImageController } from './image.controller';
 import { CommentModule } from './comment/comment.module';
 import { ReportModule } from './report/report.module';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { ReportModule } from './report/report.module';
     PostModule,
     CommentModule,
     ReportModule,
+    UserModule,
+    AuthModule,
   ],
   controllers: [AppController, ImageController],
   providers: [AppService, CloudinaryService],

@@ -2,16 +2,25 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Pensum } from '../entity/pensum.entity';
+import { User } from '../../user/entity/user.entity';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class PensumValidationService {
   constructor(
     @InjectRepository(Pensum)
     private pensumRepository: MongoRepository<Pensum>,
+    @InjectRepository(User)
+    private userRepository: MongoRepository<User>,
   ) {}
 
   async validateUniqueName(name: string): Promise<void> {
@@ -127,5 +136,15 @@ export class PensumValidationService {
     );
     this.validateMinimumCoursesPerSemester(createPensumDto.semesters);
     this.validateUniqueCoursesAcrossSemesters(createPensumDto.semesters);
+  }
+
+  async validateAdmin(userId: string): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) } as any,
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Only admins can access this resource');
+    }
   }
 }

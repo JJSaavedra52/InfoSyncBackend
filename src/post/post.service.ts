@@ -18,12 +18,11 @@ export class PostService {
   ) {}
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
-    // Validate pensum and course
+    await this.postValidationService.validateUserExists(createPostDto.userId);
     await this.postValidationService.validatePostCreation(
       createPostDto.pensumId,
       createPostDto.course,
     );
-
     const newPost = this.postRepository.create({
       ...createPostDto,
       images: createPostDto.images || [],
@@ -49,6 +48,16 @@ export class PostService {
   }
 
   async update(id: string, updatePostDto: UpdatePostDto): Promise<Post> {
+    const post = await this.findOne(id);
+
+    if (!updatePostDto.userId) {
+      throw new NotFoundException('userId is required to update a post');
+    }
+
+    await this.postValidationService.validateUserCanModifyPost(
+      post,
+      updatePostDto.userId,
+    );
     await this.postRepository.update({ _id: new ObjectId(id) } as any, {
       ...updatePostDto,
       updatedAt: new Date(),
@@ -56,7 +65,9 @@ export class PostService {
     return await this.findOne(id);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string, userId: string): Promise<{ message: string }> {
+    const post = await this.findOne(id);
+    await this.postValidationService.validateUserCanDeletePost(post, userId);
     const result = await this.postRepository.delete({
       _id: new ObjectId(id),
     } as any);

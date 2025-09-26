@@ -3,7 +3,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
-import { Comment } from './entities/comment.entity';
+import { Comment } from './entity/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateSubCommentDto } from './dto/create-subcomment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -40,8 +40,10 @@ export class CommentService {
   }
 
   async update(id: string, updateCommentDto: UpdateCommentDto) {
+    const { userId, commentary } = updateCommentDto;
     await this.commentRepository.update({ _id: new ObjectId(id) } as any, {
-      ...updateCommentDto,
+      userId,
+      commentary,
       updatedAt: new Date(),
     });
     return await this.findOne(id);
