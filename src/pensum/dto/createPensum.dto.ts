@@ -203,4 +203,10 @@ export class CreatePensumDto {
   @ValidateNested({ each: true })
   @Type(() => SemesterDto)
   semesters: SemesterDto[];
+
+  @ApiPropertyOptional({
+    example: 'This is a sample pensum description',
+    description: "Pensum's description",
+  })
+  description?: string;
 }

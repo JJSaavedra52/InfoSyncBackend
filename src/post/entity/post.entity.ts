@@ -37,4 +37,13 @@ export class Post {
 
   @Column()
   updatedAt: Date;
+
+  @Column({ default: 0 })
+  commentCount?: number;
+
+  @Column({ default: 0 })
+  likeCount?: number;
+
+  @Column({ default: 0 })
+  dislikeCount?: number;
 }

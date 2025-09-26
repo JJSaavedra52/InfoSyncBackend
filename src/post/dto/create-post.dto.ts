@@ -108,4 +108,13 @@ export class CreatePostDto {
   @IsArray()
   @IsString({ each: true })
   files?: string[];
+
+  @ApiPropertyOptional({ example: 0, description: 'Number of comments' })
+  commentCount?: number;
+
+  @ApiPropertyOptional({ example: 0, description: 'Number of likes' })
+  likeCount?: number;
+
+  @ApiPropertyOptional({ example: 0, description: 'Number of dislikes' })
+  dislikeCount?: number;
 }
