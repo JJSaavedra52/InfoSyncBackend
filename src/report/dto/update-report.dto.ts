@@ -14,10 +14,10 @@ export class UpdateReportDto extends PartialType(CreateReportDto) {
   state?: 'Pending' | 'Resolved' | 'Dismissed';
 
   @ApiPropertyOptional({
-    example: 'adminUserId123',
-    description: 'User ID of the admin who reviewed the report',
+    example: 'AdminUser',
+    description: 'User name of the admin who reviewed the report',
   })
-  reviewedBy?: string;
+  reviewedBy?: string; // Admin userName (optional)
 
   @ApiPropertyOptional({
     example: 'Reviewed and resolved. No further action needed.',

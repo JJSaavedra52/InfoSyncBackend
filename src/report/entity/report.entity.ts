@@ -35,7 +35,7 @@ export class Report {
   updatedAt: Date;
 
   @Column()
-  reviewedBy?: string; // Admin userId (optional)
+  reviewedBy?: string;
 
   @Column()
   reviewDescription?: string; // Optional admin review details
