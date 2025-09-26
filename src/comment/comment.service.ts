@@ -40,8 +40,10 @@ export class CommentService {
   }
 
   async update(id: string, updateCommentDto: UpdateCommentDto) {
+    const { userId, commentary } = updateCommentDto;
     await this.commentRepository.update({ _id: new ObjectId(id) } as any, {
-      ...updateCommentDto,
+      userId,
+      commentary,
       updatedAt: new Date(),
     });
     return await this.findOne(id);

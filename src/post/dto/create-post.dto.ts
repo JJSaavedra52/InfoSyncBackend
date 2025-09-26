@@ -34,13 +34,13 @@ export class CreatePostDto {
   @ApiProperty({
     description: 'Title of the post',
     example: 'How do I solve this integral?',
-    minLength: 5,
+    minLength: 3,
     maxLength: 100,
   })
   // End Example
   @IsString()
   @IsNotEmpty()
-  @Length(5, 100)
+  @Length(3, 100)
   title: string;
 
   @ApiProperty({
@@ -58,13 +58,13 @@ export class CreatePostDto {
   @ApiProperty({
     description: 'Description or content of the post',
     example: 'I am stuck on this math problem. Can anyone help?',
-    minLength: 10,
+    minLength: 5,
     maxLength: 1000,
   })
   // End Example
   @IsString()
   @IsNotEmpty()
-  @Length(10, 1000)
+  @Length(5, 1000)
   description: string;
 
   @ApiProperty({

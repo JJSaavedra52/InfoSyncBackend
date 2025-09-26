@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
@@ -14,12 +15,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ObjectId } from 'mongodb';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: MongoRepository<User>,
+    private jwtService: JwtService, // Inject JwtService
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -81,5 +84,29 @@ export class UserService {
   async remove(id: string) {
     await this.userRepository.delete({ _id: new ObjectId(id) } as any);
     return { message: `User ${id} deleted` };
+  }
+
+  async login(userEmail: string, password: string) {
+    const user = await this.userRepository.findOne({
+      where: { userEmail },
+    });
+    if (!user || user.status !== 'active') {
+      throw new UnauthorizedException('Invalid credentials or user is banned');
+    }
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const payload = { sub: user._id.toString(), role: user.role };
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        _id: user._id,
+        userEmail: user.userEmail,
+        userName: user.userName,
+        role: user.role,
+        status: user.status,
+      },
+    };
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Controller,
@@ -10,6 +11,7 @@ import {
   HttpCode,
   UploadedFiles,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { PostService } from './post.service';
@@ -17,7 +19,10 @@ import { CloudinaryService } from '../cloudinary.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { memoryStorage } from 'multer';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('post')
 export class PostController {
   constructor(
@@ -26,6 +31,11 @@ export class PostController {
   ) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Create a post',
+    description: 'Requires header: Authorization = Bearer your_jwt_token',
+  })
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -78,6 +88,11 @@ export class PostController {
   }
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update a post',
+    description: 'Requires header: Authorization = Bearer your_jwt_token',
+  })
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -118,6 +133,20 @@ export class PostController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a post',
+    description: 'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
+      },
+      required: ['userId'],
+    },
+  })
+  @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string, @Body('userId') userId: string) {
     return this.postService.remove(id, userId);
   }

@@ -5,9 +5,10 @@ import { CommentController } from './comment.controller';
 import { Comment } from './entity/comment.entity';
 import { CommentValidationService } from './validators/comment-validation.service';
 import { Post } from '../post/entity/post.entity';
+import { User } from 'src/user/entity/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Comment, Post])],
+  imports: [TypeOrmModule.forFeature([Comment, Post, User])],
   controllers: [CommentController],
   providers: [CommentService, CommentValidationService],
 })

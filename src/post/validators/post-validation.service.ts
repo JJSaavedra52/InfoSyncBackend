@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -70,9 +71,22 @@ export class PostValidationService {
   }
 
   async validateUserCanModifyPost(post: any, userId: string): Promise<void> {
+    // const user = await this.validateUserExists(userId);
+    // Only the creator can update
+    if (post.userId !== userId) {
+      throw new BadRequestException(
+        'Only the post creator can update this post',
+      );
+    }
+  }
+
+  async validateUserCanDeletePost(post: any, userId: string): Promise<void> {
     const user = await this.validateUserExists(userId);
+    // Allow creator or admin to delete
     if (post.userId !== userId && user.role !== 'admin') {
-      throw new BadRequestException('You are not allowed to modify this post');
+      throw new BadRequestException(
+        'Only the creator or an admin can delete this post',
+      );
     }
   }
 }

@@ -67,7 +67,7 @@ export class PostService {
 
   async remove(id: string, userId: string): Promise<{ message: string }> {
     const post = await this.findOne(id);
-    await this.postValidationService.validateUserCanModifyPost(post, userId);
+    await this.postValidationService.validateUserCanDeletePost(post, userId);
     const result = await this.postRepository.delete({
       _id: new ObjectId(id),
     } as any);

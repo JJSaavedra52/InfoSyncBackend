@@ -7,9 +7,14 @@ import { Post } from './entity/post.entity';
 import { Pensum } from '../pensum/entity/pensum.entity';
 import { CloudinaryService } from '../cloudinary.service';
 import { User } from '../user/entity/user.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Post, Pensum, User])], // <-- Add User here
+  imports: [
+    TypeOrmModule.forFeature([Post, Pensum, User]), // <-- Add User here
+    AuthModule,
+    // ...other modules
+  ],
   controllers: [PostController],
   providers: [PostService, PostValidationService, CloudinaryService], // <-- Add here
 })
