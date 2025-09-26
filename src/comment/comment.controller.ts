@@ -114,10 +114,31 @@ export class CommentController {
   }
 
   @Delete(':commentId/subcomment/:subCommentId')
+  @ApiOperation({
+    summary: 'Delete a subcomment',
+    description:
+      'Only the creator or admin can delete. Requires Authorization header: Bearer [JWT]. You must send userId in the body.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
+      },
+      required: ['userId'],
+    },
+  })
+  @UseGuards(JwtAuthGuard)
   async removeSubComment(
     @Param('commentId') commentId: string,
     @Param('subCommentId') subCommentId: string,
+    @Body('userId') userId: string,
   ) {
+    await this.commentValidationService.validateSubCommentDelete(
+      commentId,
+      subCommentId,
+      userId,
+    );
     return this.commentService.removeSubComment(commentId, subCommentId);
   }
 }

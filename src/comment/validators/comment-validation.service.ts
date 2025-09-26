@@ -77,4 +77,28 @@ export class CommentValidationService {
       );
     }
   }
+
+  async validateSubCommentDelete(
+    commentId: string,
+    subCommentId: string,
+    userId: string,
+  ): Promise<void> {
+    const comment = await this.commentRepository.findOne({
+      where: { _id: new ObjectId(commentId) } as any,
+    });
+    if (!comment) throw new NotFoundException('Comment not found');
+    const subComment = comment.subComments?.find(
+      (sc) => sc._id.toString() === subCommentId,
+    );
+    if (!subComment) throw new NotFoundException('SubComment not found');
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) } as any,
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (subComment.userId !== userId && user.role !== 'admin') {
+      throw new BadRequestException(
+        'Only the creator or admin can delete this subcomment',
+      );
+    }
+  }
 }
