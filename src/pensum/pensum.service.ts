@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
@@ -18,6 +22,7 @@ export class PensumService {
   ) {}
 
   async create(createPensumDto: CreatePensumDto): Promise<Pensum> {
+    await this.pensumValidationService.validateAdmin(createPensumDto.userId);
     // Run all validations
     await this.pensumValidationService.validatePensumCreation(createPensumDto);
 
@@ -52,6 +57,11 @@ export class PensumService {
   }
 
   async update(id: string, updateData: UpdatePensumDto): Promise<Pensum> {
+    if (!updateData.userId) {
+      throw new BadRequestException('userId is required to update a pensum');
+    }
+    await this.pensumValidationService.validateAdmin(updateData.userId);
+
     await this.pensumRepository.update({ _id: new ObjectId(id) } as any, {
       ...updateData,
       updatedAt: new Date(),
@@ -60,7 +70,12 @@ export class PensumService {
     return await this.findOne(id);
   }
 
-  async delete(id: string): Promise<{ message: string }> {
+  async delete(id: string, userId: string): Promise<{ message: string }> {
+    if (!userId) {
+      throw new BadRequestException('userId is required to delete a pensum');
+    }
+    await this.pensumValidationService.validateAdmin(userId);
+
     const result = await this.pensumRepository.delete({
       _id: new ObjectId(id),
     } as any);

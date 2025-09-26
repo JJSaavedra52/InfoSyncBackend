@@ -7,12 +7,17 @@ import {
   HttpCode,
   Patch,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { PensumService } from './pensum.service';
 import { CreatePensumDto } from './dto/createPensum.dto';
 import { UpdatePensumDto } from './dto/updatePensum.dto';
 import { AddCourseDto } from './dto/addCourse.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('pensum')
 export class PensumController {
   constructor(private pensumService: PensumService) {}
@@ -47,9 +52,8 @@ export class PensumController {
 
   // (D) Delete a specific pensum
   @Delete(':id')
-  @HttpCode(200)
-  remove(@Param('id') id: string) {
-    return this.pensumService.delete(id);
+  async delete(@Param('id') id: string, @Body('userId') userId: string) {
+    return this.pensumService.delete(id, userId);
   }
 
   // ********Course management endpoints**********

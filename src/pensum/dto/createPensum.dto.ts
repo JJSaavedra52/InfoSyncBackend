@@ -68,6 +68,14 @@ export class SemesterDto {
 
 export class CreatePensumDto {
   @ApiProperty({
+    description: 'User ID of the admin creating the pensum',
+    example: '64f8a1234567890abcdef123',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
     description: 'Name of the pensum (must be unique)',
     example: 'Computer Science Program 2024',
     minLength: 2,
