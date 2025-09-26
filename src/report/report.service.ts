@@ -46,9 +46,13 @@ export class ReportService {
 
   async update(id: string, updateReportDto: UpdateReportDto) {
     if (!updateReportDto.userId) {
-      throw new BadRequestException('userId (admin) is required to update a report');
+      throw new BadRequestException(
+        'userId (admin) is required to update a report',
+      );
     }
-    const admin = await this.reportValidationService.getAdminUser(updateReportDto.userId);
+    const admin = await this.reportValidationService.getAdminUser(
+      updateReportDto.userId,
+    );
 
     const updateData = { ...updateReportDto, reviewedBy: admin.userName };
     const state = updateReportDto.state?.toLowerCase();

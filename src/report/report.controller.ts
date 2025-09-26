@@ -89,7 +89,10 @@ export class ReportController {
       properties: {
         userId: { type: 'string', example: '68d5a53750fc02a273a93e20' },
         state: { type: 'string', example: 'Resolved' },
-        reviewDescription: { type: 'string', example: 'Reviewed and resolved.' },
+        reviewDescription: {
+          type: 'string',
+          example: 'Reviewed and resolved.',
+        },
       },
       required: ['userId', 'state'],
     },
@@ -99,7 +102,9 @@ export class ReportController {
     @Body() updateReportDto: UpdateReportDto,
   ) {
     if (!updateReportDto.userId) {
-      throw new BadRequestException('userId (admin) is required to update a report');
+      throw new BadRequestException(
+        'userId (admin) is required to update a report',
+      );
     }
     await this.reportValidationService.validateAdmin(updateReportDto.userId);
     return this.reportService.update(id, updateReportDto);
