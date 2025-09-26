@@ -14,7 +14,7 @@ import { CreatePensumDto } from './dto/createPensum.dto';
 import { UpdatePensumDto } from './dto/updatePensum.dto';
 import { AddCourseDto } from './dto/addCourse.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -24,6 +24,11 @@ export class PensumController {
 
   // (C) Create a new pensum
   @Post()
+  @ApiOperation({
+    summary: 'Create a new pensum',
+    description:
+      'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
   @HttpCode(201)
   create(@Body() createPensumDto: CreatePensumDto) {
     return this.pensumService.create(createPensumDto);
@@ -45,6 +50,11 @@ export class PensumController {
 
   // (U) Update a specific pensum
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update a pensum',
+    description:
+      'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
   @HttpCode(200)
   update(@Param('id') id: string, @Body() updatePensumDto: UpdatePensumDto) {
     return this.pensumService.update(id, updatePensumDto);
@@ -52,6 +62,20 @@ export class PensumController {
 
   // (D) Delete a specific pensum
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a pensum',
+    description:
+      'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
+      },
+      required: ['userId'],
+    },
+  })
   async delete(@Param('id') id: string, @Body('userId') userId: string) {
     return this.pensumService.delete(id, userId);
   }
@@ -60,6 +84,11 @@ export class PensumController {
 
   // (C) Add a new course to a specific pensum
   @Post(':id/course')
+  @ApiOperation({
+    summary: 'Add a course to a pensum',
+    description:
+      'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
   @HttpCode(200)
   addCourse(@Param('id') id: string, @Body() addCourseDto: AddCourseDto) {
     return this.pensumService.addCourse(id, addCourseDto);
@@ -95,6 +124,11 @@ export class PensumController {
 
   // (U) Update a course in a specific semester in a specific pensum
   @Patch(':id/semester/:semesterNumber/course/:courseName')
+  @ApiOperation({
+    summary: 'Update a course in a pensum',
+    description:
+      'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+  })
   @HttpCode(200)
   updateCourse(
     @Param('id') id: string,
