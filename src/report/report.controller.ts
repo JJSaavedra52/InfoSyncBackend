@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
   Get,
@@ -7,6 +9,7 @@ import {
   Param,
   Delete,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { UseGuards } from '@nestjs/common';
@@ -43,38 +46,22 @@ export class ReportController {
   @ApiOperation({
     summary: 'Get all reports',
     description:
-      'Requires Authorization header: Bearer your_jwt_token. Only admins can access. You must send userId in the body.',
+      'Requires Authorization header: Bearer your_jwt_token. Only admins can access.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: 'adminUserId123' },
-      },
-      required: ['userId'],
-    },
-  })
-  async findAll(@Body('userId') userId: string) {
-    return this.reportService.findAll(userId);
+  async findAll(@Req() req) {
+    await this.reportValidationService.validateAdmin(req.user.userId);
+    return this.reportService.findAll(req.user.userId);
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get a report',
     description:
-      'Requires Authorization header: Bearer your_jwt_token. Only admins can access. You must send userId in the body.',
+      'Requires Authorization header: Bearer your_jwt_token. Only admins can access.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: 'adminUserId123' },
-      },
-      required: ['userId'],
-    },
-  })
-  async findOne(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.reportService.findOne(id, userId);
+  async findOne(@Param('id') id: string, @Req() req) {
+    await this.reportValidationService.validateAdmin(req.user.userId);
+    return this.reportService.findOne(id, req.user.userId);
   }
 
   @Patch(':id')
