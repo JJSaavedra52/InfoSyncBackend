@@ -8,6 +8,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entity/post.entity';
 import { PostValidationService } from './validators/post-validation.service';
+import { SocketGateway } from '../socket/socket.gateway';
 
 @Injectable()
 export class PostService {
@@ -15,6 +16,7 @@ export class PostService {
     @InjectRepository(Post)
     private postRepository: MongoRepository<Post>,
     private postValidationService: PostValidationService,
+    private socketGateway: SocketGateway,
   ) {}
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
@@ -75,5 +77,26 @@ export class PostService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
     return { message: `Post with ID ${id} has been deleted` };
+  }
+
+  async likePost(postId: string) {
+    await this.postRepository.updateOne(
+      { _id: new ObjectId(postId) },
+      { $inc: { likeCount: 1 } },
+    );
+    const post = await this.postRepository.findOne({
+      where: { _id: new ObjectId(postId) } as any,
+    });
+    this.socketGateway.server.emit('likeCountUpdate', {
+      postId,
+      likeCount: post.likeCount,
+    });
+  }
+
+  async dislikePost(postId: string) {
+    await this.postRepository.updateOne(
+      { _id: new ObjectId(postId) },
+      { $inc: { dislikeCount: 1 } },
+    );
   }
 }
