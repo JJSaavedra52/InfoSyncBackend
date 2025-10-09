@@ -87,6 +87,9 @@ export class PostService {
     const post = await this.postRepository.findOne({
       where: { _id: new ObjectId(postId) } as any,
     });
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${postId} not found`);
+    }
     this.socketGateway.server.emit('likeCountUpdate', {
       postId,
       likeCount: post.likeCount,

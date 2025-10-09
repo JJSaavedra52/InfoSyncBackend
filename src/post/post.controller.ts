@@ -150,4 +150,16 @@ export class PostController {
   remove(@Param('id') id: string, @Body('userId') userId: string) {
     return this.postService.remove(id, userId);
   }
+
+  @Post(':id/like')
+  async likePost(@Param('id') id: string) {
+    await this.postService.likePost(id);
+    return { message: 'Post liked' };
+  }
+
+  @Post(':id/dislike')
+  async dislikePost(@Param('id') id: string) {
+    await this.postService.dislikePost(id);
+    return { message: 'Post disliked' };
+  }
 }
