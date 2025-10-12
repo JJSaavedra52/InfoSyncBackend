@@ -26,11 +26,6 @@ export class PostService {
       createPostDto.course,
     );
 
-    // Ensure counts are numbers and default to 0 if missing
-    createPostDto.likeCount = Number(createPostDto.likeCount) || 0;
-    createPostDto.dislikeCount = Number(createPostDto.dislikeCount) || 0;
-    createPostDto.commentCount = Number(createPostDto.commentCount) || 0;
-
     const newPost = this.postRepository.create({
       ...createPostDto,
       images: createPostDto.images || [],

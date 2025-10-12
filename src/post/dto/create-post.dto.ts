@@ -110,11 +110,11 @@ export class CreatePostDto {
   files?: string[];
 
   @ApiPropertyOptional({ example: 0, description: 'Number of comments' })
-  commentCount?: number;
+  commentCount?: 0;
 
   @ApiPropertyOptional({ example: 0, description: 'Number of likes' })
-  likeCount?: number;
+  likeCount?: 0;
 
   @ApiPropertyOptional({ example: 0, description: 'Number of dislikes' })
-  dislikeCount?: number;
+  dislikeCount?: 0;
 }
