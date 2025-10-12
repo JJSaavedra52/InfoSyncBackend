@@ -26,6 +26,28 @@ export class PostService {
       createPostDto.course,
     );
 
+    // Force counts to be numbers, default to 0 if missing, null, or not a number
+    createPostDto.likeCount =
+      typeof createPostDto.likeCount === 'string'
+        ? Number(createPostDto.likeCount) || 0
+        : typeof createPostDto.likeCount === 'number'
+          ? createPostDto.likeCount
+          : 0;
+
+    createPostDto.dislikeCount =
+      typeof createPostDto.dislikeCount === 'string'
+        ? Number(createPostDto.dislikeCount) || 0
+        : typeof createPostDto.dislikeCount === 'number'
+          ? createPostDto.dislikeCount
+          : 0;
+
+    createPostDto.commentCount =
+      typeof createPostDto.commentCount === 'string'
+        ? Number(createPostDto.commentCount) || 0
+        : typeof createPostDto.commentCount === 'number'
+          ? createPostDto.commentCount
+          : 0;
+
     const newPost = this.postRepository.create({
       ...createPostDto,
       images: createPostDto.images || [],
