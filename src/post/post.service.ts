@@ -111,4 +111,28 @@ export class PostService {
       { $inc: { dislikeCount: 1 } },
     );
   }
+
+  async unlikePost(postId: string) {
+    await this.postRepository.updateOne(
+      { _id: new ObjectId(postId) },
+      { $inc: { likeCount: -1 } },
+    );
+    const post = await this.postRepository.findOne({
+      where: { _id: new ObjectId(postId) } as any,
+    });
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${postId} not found`);
+    }
+    this.socketGateway.server.emit('likeCountUpdate', {
+      postId,
+      likeCount: post.likeCount,
+    });
+  }
+
+  async undislikePost(postId: string) {
+    await this.postRepository.updateOne(
+      { _id: new ObjectId(postId) },
+      { $inc: { dislikeCount: -1 } },
+    );
+  }
 }
