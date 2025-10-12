@@ -27,26 +27,9 @@ export class PostService {
     );
 
     // Always coerce to number before saving
-    const likeCount =
-      typeof createPostDto.likeCount === 'string'
-        ? Number(createPostDto.likeCount) || 0
-        : typeof createPostDto.likeCount === 'number'
-          ? createPostDto.likeCount
-          : 0;
-
-    const dislikeCount =
-      typeof createPostDto.dislikeCount === 'string'
-        ? Number(createPostDto.dislikeCount) || 0
-        : typeof createPostDto.dislikeCount === 'number'
-          ? createPostDto.dislikeCount
-          : 0;
-
-    const commentCount =
-      typeof createPostDto.commentCount === 'string'
-        ? Number(createPostDto.commentCount) || 0
-        : typeof createPostDto.commentCount === 'number'
-          ? createPostDto.commentCount
-          : 0;
+    const likeCount = Number(createPostDto.likeCount ?? 0);
+    const dislikeCount = Number(createPostDto.dislikeCount ?? 0);
+    const commentCount = Number(createPostDto.commentCount ?? 0);
 
     const newPost = this.postRepository.create({
       ...createPostDto,
