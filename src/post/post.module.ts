@@ -8,11 +8,13 @@ import { Pensum } from '../pensum/entity/pensum.entity';
 import { CloudinaryService } from '../cloudinary.service';
 import { User } from '../user/entity/user.entity';
 import { AuthModule } from '../auth/auth.module';
+import { SocketModule } from 'src/socket/socket.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, Pensum, User]), // <-- Add User here
     AuthModule,
+    SocketModule,
     // ...other modules
   ],
   controllers: [PostController],

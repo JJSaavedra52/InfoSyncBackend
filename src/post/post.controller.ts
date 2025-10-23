@@ -150,4 +150,32 @@ export class PostController {
   remove(@Param('id') id: string, @Body('userId') userId: string) {
     return this.postService.remove(id, userId);
   }
+
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  async likePost(@Param('id') id: string) {
+    await this.postService.likePost(id);
+    return { message: 'Post liked' };
+  }
+
+  @Post(':id/dislike')
+  @UseGuards(JwtAuthGuard)
+  async dislikePost(@Param('id') id: string) {
+    await this.postService.dislikePost(id);
+    return { message: 'Post disliked' };
+  }
+
+  @Patch(':id/like')
+  @UseGuards(JwtAuthGuard)
+  async unlikePost(@Param('id') id: string) {
+    await this.postService.unlikePost(id);
+    return { message: 'Post unliked' };
+  }
+
+  @Patch(':id/dislike')
+  @UseGuards(JwtAuthGuard)
+  async undislikePost(@Param('id') id: string) {
+    await this.postService.undislikePost(id);
+    return { message: 'Post undisliked' };
+  }
 }
