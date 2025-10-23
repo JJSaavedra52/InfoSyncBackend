@@ -52,20 +52,15 @@ export class PostController {
   ) {
     const imageUrls: string[] = [];
     for (const file of files.images || []) {
-      const uploadResult = await this.cloudinaryService.uploadBuffer(
-        file.buffer,
-        file.originalname,
-      );
-      imageUrls.push(uploadResult.secure_url);
+      const uploadResult = await this.cloudinaryService.uploadBuffer(file);
+      imageUrls.push((uploadResult as any).secure_url);
     }
 
     const fileUrls: string[] = [];
     for (const file of files.files || []) {
-      const uploadResult = await this.cloudinaryService.uploadBuffer(
-        file.buffer,
-        file.originalname,
-      );
-      fileUrls.push(uploadResult.secure_url);
+      const uploadResult = await this.cloudinaryService.uploadBuffer(file);
+      console.log('cloudinary upload result:', uploadResult); // <- inspect fields: resource_type, secure_url, downloadUrl, public_id
+      fileUrls.push((uploadResult as any).downloadUrl ?? (uploadResult as any).secure_url);
     }
 
     createPostDto.images = imageUrls;
@@ -110,20 +105,15 @@ export class PostController {
   ) {
     const imageUrls: string[] = [];
     for (const file of files.images || []) {
-      const uploadResult = await this.cloudinaryService.uploadBuffer(
-        file.buffer,
-        file.originalname,
-      );
-      imageUrls.push(uploadResult.secure_url);
+      const uploadResult = await this.cloudinaryService.uploadBuffer(file);
+      imageUrls.push((uploadResult as any).secure_url);
     }
 
     const fileUrls: string[] = [];
     for (const file of files.files || []) {
-      const uploadResult = await this.cloudinaryService.uploadBuffer(
-        file.buffer,
-        file.originalname,
-      );
-      fileUrls.push(uploadResult.secure_url);
+      const uploadResult = await this.cloudinaryService.uploadBuffer(file);
+      console.log('cloudinary upload result:', uploadResult); // <- inspect fields: resource_type, secure_url, downloadUrl, public_id
+      fileUrls.push((uploadResult as any).downloadUrl ?? (uploadResult as any).secure_url);
     }
 
     if (imageUrls.length) updatePostDto.images = imageUrls;
