@@ -3,6 +3,8 @@ import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class CreateSubCommentDto {
   @ApiProperty({ example: '64f8a1234567890abcdef123' })
+  @IsNotEmpty()
+  @IsString()
   userId: string;
 
   @ApiProperty({ example: 'This is a subcomment.' })

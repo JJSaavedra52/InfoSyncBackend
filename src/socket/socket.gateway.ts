@@ -12,7 +12,7 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
   cors: {
-    origin: ['https://infosync-front-1.onrender.com'], // Permitir el frontend local
+    origin: ['http://localhost:5173'], // Permitir el frontend local
   },
 })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -72,6 +72,24 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   emitCommentCountUpdate(postId: string, commentCount: number) {
     this.server.emit('comment_update', { postId, commentCount });
     console.log(`Emitted comment_update for postId: ${postId} with commentCount: ${commentCount}`);
+  }
+
+  /**
+   * Emit a new comment to all clients in the post room.
+   * Payload shape: { postId, comment }
+   */
+  emitCommentAdded(postId: string, comment: any) {
+    this.server.to(`post_${postId}`).emit('comment_added', { postId, comment });
+    console.log(`Emitted comment_added for post_${postId}`, { postId, commentId: comment?._id });
+  }
+
+  /**
+   * Emit an updated comment (including subcomments) to all clients in the post room.
+   * Payload shape: { postId, comment }
+   */
+  emitCommentUpdated(postId: string, comment: any) {
+    this.server.to(`post_${postId}`).emit('comment_updated', { postId, comment });
+    console.log(`Emitted comment_updated for post_${postId}`, { postId, commentId: comment?._id });
   }
 
   emitPostUpdate(postId: string, postData: any) {
