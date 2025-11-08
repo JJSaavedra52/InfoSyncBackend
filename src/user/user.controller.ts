@@ -64,7 +64,13 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() req,
   ) {
-    return this.userService.update(id, updateUserDto, req.user.userId);
+    // Pass both requesterId and requesterRole to the service so admins can update other users
+    return this.userService.update(
+      id,
+      updateUserDto,
+      req.user.userId,
+      req.user.role,
+    );
   }
 
   @Patch(':id/status')
