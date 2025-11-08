@@ -68,8 +68,16 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto, requesterId: string) {
-    await this.userValidationService.validateOwner(id, requesterId);
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    requesterId: string,
+    requesterRole?: string,
+  ) {
+    // Allow admins to update other users. Non-admins must be the owner.
+    if (requesterRole !== 'admin') {
+      await this.userValidationService.validateOwner(id, requesterId);
+    }
     if (updateUserDto.password) {
       updateUserDto.passwordHash = await bcrypt.hash(
         updateUserDto.password,
@@ -77,9 +85,20 @@ export class UserService {
       );
       delete updateUserDto.password;
     }
+    // Remove empty / null / undefined string fields to avoid overwriting existing values
+    const sanitizedUpdate: Partial<UpdateUserDto> = {};
+    for (const [key, value] of Object.entries(updateUserDto as any)) {
+      // Skip undefined or null
+      if (value === undefined || value === null) continue;
+      // Skip empty strings (after trimming)
+      if (typeof value === 'string' && value.trim() === '') continue;
+      // Keep the value
+      (sanitizedUpdate as any)[key] = value;
+    }
+
     await this.userRepository.update(
       { _id: new ObjectId(id) } as any,
-      updateUserDto,
+      sanitizedUpdate,
     );
     return await this.findOne(id);
   }

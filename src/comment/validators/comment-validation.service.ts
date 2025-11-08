@@ -24,25 +24,25 @@ export class CommentValidationService {
 
   async validatePostExists(postId: string): Promise<void> {
     if (!ObjectId.isValid(postId)) {
-      throw new BadRequestException('Invalid postId format');
+      throw new BadRequestException(`Invalid postId format: ${String(postId)}`);
     }
     const post = await this.postRepository.findOne({
       where: { _id: new ObjectId(postId) } as any,
     });
     if (!post) {
-      throw new BadRequestException('Referenced post does not exist');
+      throw new BadRequestException(`Referenced post does not exist: ${String(postId)}`);
     }
   }
 
   async validateUserExists(userId: string): Promise<User> {
     if (!ObjectId.isValid(userId)) {
-      throw new BadRequestException('Invalid userId format');
+      throw new BadRequestException(`Invalid userId format: ${String(userId)}`);
     }
     const user = await this.userRepository.findOne({
       where: { _id: new ObjectId(userId) } as any,
     });
     if (!user) {
-      throw new BadRequestException('User does not exist');
+      throw new BadRequestException(`User does not exist: ${String(userId)}`);
     }
     return user;
   }

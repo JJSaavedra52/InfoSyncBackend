@@ -16,8 +16,48 @@ async function bootstrap() {
     credentials: true, // if you use cookies/auth
   });
 
-  // Enable validation pipes
-  app.useGlobalPipes(new ValidationPipe());
+  // Temporary raw-body logger + sanitizer for incoming PATCH /user requests
+  // (Parse raw JSON, remove null/undefined/empty-string fields, then set req.body
+  //  so ValidationPipe receives a cleaned payload.)
+  app.use((req, res, next) => {
+    try {
+      if (req.path && req.path.startsWith('/user') && req.method === 'PATCH') {
+        let raw = '';
+        req.on('data', (chunk) => {
+          raw += chunk;
+        });
+        req.on('end', () => {
+          try {
+            const parsed = raw ? JSON.parse(raw) : {};
+            // sanitize parsed object: remove null/undefined/empty-string entries
+            if (parsed && typeof parsed === 'object') {
+              const sanitized: any = {};
+              for (const [k, v] of Object.entries(parsed)) {
+                if (v === undefined || v === null) continue;
+                if (typeof v === 'string' && v.trim() === '') continue;
+                sanitized[k] = v;
+              }
+              req.body = sanitized;
+            } else {
+              req.body = {};
+              console.log(`Sanitized body for ${req.method} ${req.path}: {}`);
+            }
+          } catch (e) {
+            console.log(`Raw body for ${req.method} ${req.path}:`, raw || '{}');
+          }
+          next();
+        });
+      } else {
+        next();
+      }
+    } catch (err) {
+      // don't block the app for logging failures
+      next();
+    }
+  });
+
+  // Enable validation pipes - whitelist will strip unknown properties before validation
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   // Swagger configuration
   const config = new DocumentBuilder()

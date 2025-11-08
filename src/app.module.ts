@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PensumModule } from './pensum/pensum.module';
 import { PostModule } from './post/post.module';
+import { SocketModule } from './socket/socket.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 import { ImageController } from './image.controller';
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     PensumModule,
     PostModule,
+    SocketModule,
     CommentModule,
     ReportModule,
     UserModule,
@@ -30,4 +32,4 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController, ImageController],
   providers: [AppService, CloudinaryService],
 })
-export class AppModule {}
+export class AppModule { }

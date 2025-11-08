@@ -8,12 +8,14 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateSubCommentDto } from './dto/create-subcomment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ObjectId } from 'mongodb';
+import { SocketGateway } from '../socket/socket.gateway';
 
 @Injectable()
 export class CommentService {
   constructor(
     @InjectRepository(Comment)
     private commentRepository: MongoRepository<Comment>,
+    private socketGateway: SocketGateway,
   ) {}
 
   async create(createCommentDto: CreateCommentDto) {
@@ -24,7 +26,18 @@ export class CommentService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    return await this.commentRepository.save(newComment);
+    const saved = await this.commentRepository.save(newComment);
+
+    // Emit real-time event to clients in the post room (best-effort)
+    try {
+      const commentForEmit = this._serializeForEmit(saved);
+      this.socketGateway.emitCommentAdded(String(saved.postId), commentForEmit);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to emit comment_added:', err?.message ?? err);
+    }
+
+    return saved;
   }
 
   async findAll() {
@@ -46,7 +59,15 @@ export class CommentService {
       commentary,
       updatedAt: new Date(),
     });
-    return await this.findOne(id);
+    const updated = await this.findOne(id);
+    try {
+      const commentForEmit = this._serializeForEmit(updated);
+      this.socketGateway.emitCommentUpdated(String(updated.postId), commentForEmit);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to emit comment_updated:', err?.message ?? err);
+    }
+    return updated;
   }
 
   async remove(id: string) {
@@ -71,6 +92,13 @@ export class CommentService {
       createdAt: new Date(),
     });
     await this.commentRepository.save(comment);
+    try {
+      const commentForEmit = this._serializeForEmit(comment);
+      this.socketGateway.emitCommentUpdated(String(comment.postId), commentForEmit);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to emit comment_updated (subcomment):', err?.message ?? err);
+    }
     return comment;
   }
 
@@ -85,6 +113,13 @@ export class CommentService {
       throw new NotFoundException(`SubComment ${subCommentId} not found`);
     }
     await this.commentRepository.save(comment);
+    try {
+      const commentForEmit = this._serializeForEmit(comment);
+      this.socketGateway.emitCommentUpdated(String(comment.postId), commentForEmit);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to emit comment_updated (removeSubComment):', err?.message ?? err);
+    }
     return comment;
   }
 
@@ -92,5 +127,25 @@ export class CommentService {
     return await this.commentRepository.find({
       where: { postId },
     });
+  }
+
+  /**
+   * Prepare a comment object for socket emission by converting ObjectId fields to strings.
+   */
+  private _serializeForEmit(comment: Comment) {
+    const c: any = { ...comment } as any;
+    try {
+      if (c._id && typeof c._id.toString === 'function') c._id = c._id.toString();
+      if (Array.isArray(c.subComments)) {
+        c.subComments = c.subComments.map((sc: any) => ({
+          ...sc,
+          _id: sc._id && typeof sc._id.toString === 'function' ? sc._id.toString() : sc._id,
+        }));
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('serializeForEmit: failed to fully normalize comment ids', err?.message ?? err);
+    }
+    return c;
   }
 }
