@@ -12,7 +12,13 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
   cors: {
-    origin: ['https://infosync-front-1.onrender.com'], // Permitir el frontend en producción
+    origin: [
+      'https://infosync-front-1.onrender.com', // production
+      'http://localhost:5173', // local frontend (Vite)
+    ],
+    credentials: true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
   },
 })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -23,10 +29,15 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     try {
-      const token = client.handshake.query.token as string;
+      // Support token sent either via the modern `auth` field or the legacy `query`.
+      const handshake: any = client.handshake || {};
+      const auth = handshake.auth;
+      const query = handshake.query;
+      const token = (auth && auth.token) || (query && query.token);
+
       if (token) {
         console.log(`Connection attempt from client: ${client.id}`);
-        console.log(`Token received: ${token}`);
+        console.log(`Token received (via ${auth && auth.token ? 'auth' : 'query'}): ${token}`);
         const decoded = jwt.verify(token, 'your_jwt_secret') as { sub: string; role: string };
         console.log(`Decoded token:`, decoded);
         if (decoded && decoded.sub) {
@@ -40,7 +51,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Connection attempt from client ${client.id} without token. Limited access granted.`);
       }
     } catch (error) {
-      console.error(`Connection failed for client ${client.id}:`, error.message);
+      console.error(`Connection failed for client ${client.id}:`, error?.message || error);
       client.disconnect();
     }
   }
