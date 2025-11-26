@@ -12,7 +12,7 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
   cors: {
-    origin: ['https://infosyncbackend.onrender.com'], // Permitir el frontend local
+    origin: ['https://infosync-front-1.onrender.com'], // Permitir el frontend en producción
   },
 })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
