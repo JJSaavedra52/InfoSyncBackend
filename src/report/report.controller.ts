@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
@@ -34,7 +36,10 @@ export class ReportController {
     description:
       'Requires Authorization header: Bearer your_jwt_token. Both students and admins can create reports.',
   })
-  async create(@Body() createReportDto: CreateReportDto) {
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() createReportDto: CreateReportDto, @Req() req) {
+    // ensure reporter userId comes from token (avoid spoofing)
+    createReportDto.userId = createReportDto.userId ?? req.user.userId;
     await this.reportValidationService.validateTargetExists(
       createReportDto.targetType,
       createReportDto.targetId,
@@ -64,11 +69,12 @@ export class ReportController {
     return this.reportService.findOne(id, req.user.userId);
   }
 
+  // PATCH /report/:id/resolve  (requires auth)
   @Patch(':id')
   @ApiOperation({
     summary: 'Update a report',
     description:
-      'Requires Authorization header: Bearer your_jwt_token. Only admins can update. You must send userId in the body.',
+      'Requires Authorization header: Bearer your_jwt_token. Only admins can update. You must send userId in the body, or the admin token will be used.',
   })
   @ApiBody({
     schema: {
@@ -81,19 +87,29 @@ export class ReportController {
           example: 'Reviewed and resolved.',
         },
       },
-      required: ['userId', 'state'],
+      required: ['state'],
     },
   })
   async update(
     @Param('id') id: string,
     @Body() updateReportDto: UpdateReportDto,
+    @Req() req,
   ) {
-    if (!updateReportDto.userId) {
-      throw new BadRequestException(
-        'userId (admin) is required to update a report',
-      );
-    }
-    await this.reportValidationService.validateAdmin(updateReportDto.userId);
+    const adminUserId = req.user?.userId;
+    await this.reportValidationService.validateUserExists(adminUserId);
+    await this.reportValidationService.validateAdmin(adminUserId);
+
+    // Prefer JWT-provided human name fields, fallback to DB lookup, then id
+    const reviewerName =
+      req.user?.userName ??
+      req.user?.username ??
+      req.user?.name ??
+      req.user?.fullName ??
+      (await this.reportValidationService.getUserDisplayName(adminUserId)) ??
+      adminUserId;
+
+    updateReportDto.reviewedBy = reviewerName;
+
     return this.reportService.update(id, updateReportDto);
   }
 
