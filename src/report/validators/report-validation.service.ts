@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
@@ -7,10 +8,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
-import { Post } from '../../post/entity/post.entity';
-import { Comment } from '../../comment/entity/comment.entity';
 import { ObjectId } from 'mongodb';
-import { User } from '../../user/entity/user.entity';
+import { User } from 'src/user/entity/user.entity';
+import { Comment } from '../../comment/entity/comment.entity';
+import { Post } from 'src/post/entity/post.entity';
 
 @Injectable()
 export class ReportValidationService {
@@ -20,7 +21,7 @@ export class ReportValidationService {
     @InjectRepository(Comment)
     private commentRepository: MongoRepository<Comment>,
     @InjectRepository(User)
-    private userRepository: MongoRepository<User>,
+    private readonly userRepository: MongoRepository<User>,
   ) {}
 
   async validateTargetExists(
@@ -58,7 +59,7 @@ export class ReportValidationService {
       throw new BadRequestException('Invalid or missing userId format');
     }
     const user = await this.userRepository.findOne({
-      where: { _id: new ObjectId(userId) } as any,
+      where: { _id: new ObjectId(userId) },
     });
     if (!user) throw new NotFoundException('User not found');
     if (user.role !== 'admin') {
@@ -72,7 +73,7 @@ export class ReportValidationService {
     }
     const user = await this.userRepository.findOne({
       where: { userName },
-    });
+    } as any);
     if (!user) throw new NotFoundException('Admin user not found');
     if (user.role !== 'admin') {
       throw new ForbiddenException('Only admins can access this resource');
@@ -85,7 +86,7 @@ export class ReportValidationService {
       throw new BadRequestException('Invalid or missing userId format');
     }
     const user = await this.userRepository.findOne({
-      where: { _id: new ObjectId(userId) } as any,
+      where: { _id: new ObjectId(userId) },
     });
     if (!user) {
       throw new NotFoundException('User does not exist');
@@ -104,5 +105,24 @@ export class ReportValidationService {
       throw new ForbiddenException('Only admins can access this resource');
     }
     return user;
+  }
+
+  // New helper: return a human readable name for a user id (fallback to id if not found)
+  async getUserDisplayName(userId?: string): Promise<string | null> {
+    if (!userId) return null;
+    if (!this.userRepository) return userId;
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { _id: new ObjectId(userId) },
+      });
+      if (!user) return userId;
+      const display =
+        user.userName ?? user.userEmail ?? user._id?.toString() ?? userId;
+      return String(display);
+    } catch (err) {
+      console.error('getUserDisplayName error', err);
+      return userId;
+    }
   }
 }

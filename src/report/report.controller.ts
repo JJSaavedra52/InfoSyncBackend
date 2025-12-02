@@ -70,27 +70,6 @@ export class ReportController {
   }
 
   // PATCH /report/:id/resolve  (requires auth)
-  @Patch(':id/resolve')
-  @UseGuards(JwtAuthGuard)
-  async resolveReport(
-    @Param('id') id: string,
-    @Body() body: { reviewDescription?: string },
-    @Req() req,
-  ) {
-    const adminUserId = req.user?.userId;
-    await this.reportValidationService.validateUserExists(adminUserId);
-    await this.reportValidationService.validateAdmin(adminUserId);
-
-    const reviewerName =
-      req.user?.name ?? req.user?.username ?? req.user?.fullName ?? adminUserId;
-
-    return this.reportService.resolveReport(
-      id,
-      reviewerName,
-      body.reviewDescription,
-    );
-  }
-
   @Patch(':id')
   @ApiOperation({
     summary: 'Update a report',
@@ -116,14 +95,20 @@ export class ReportController {
     @Body() updateReportDto: UpdateReportDto,
     @Req() req,
   ) {
-    // Use the authenticated user as the admin performing the action
     const adminUserId = req.user?.userId;
     await this.reportValidationService.validateUserExists(adminUserId);
     await this.reportValidationService.validateAdmin(adminUserId);
 
-    // Set reviewedBy to a human-readable name from the token (fallback to id)
-    updateReportDto.reviewedBy =
-      req.user?.name ?? req.user?.username ?? req.user?.fullName ?? adminUserId;
+    // Prefer JWT-provided human name fields, fallback to DB lookup, then id
+    const reviewerName =
+      req.user?.userName ??
+      req.user?.username ??
+      req.user?.name ??
+      req.user?.fullName ??
+      (await this.reportValidationService.getUserDisplayName(adminUserId)) ??
+      adminUserId;
+
+    updateReportDto.reviewedBy = reviewerName;
 
     return this.reportService.update(id, updateReportDto);
   }
