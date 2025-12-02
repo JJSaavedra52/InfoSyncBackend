@@ -24,16 +24,18 @@ export class ReportService {
   ) {}
 
   async create(createReportDto: CreateReportDto) {
-    await this.reportValidationService.validateUserExists(
-      createReportDto.userId,
-    );
+    // ensure state has a default
+    createReportDto.state = createReportDto.state ?? 'Pending';
 
-    const newReport = this.reportRepository.create({
+    const reportData: Partial<Report> = {
       ...createReportDto,
       createdAt: new Date(),
-      status: 'open',
-    });
-    return await this.reportRepository.save(newReport);
+      updatedAt: undefined, // avoid assigning null which breaks typings
+    };
+
+    const newReport = this.reportRepository.create(reportData);
+
+    return this.reportRepository.save(newReport);
   }
 
   async findAll(userId: string) {
@@ -106,7 +108,7 @@ export class ReportService {
         reviewedAt: new Date(),
         // allow admin to add/replace reviewDescription; if none provided keep existing
         reviewDescription: reviewDescription ?? existing.reviewDescription,
-        status: 'resolved',
+        state: 'Resolved', // use `state` instead of `status`
       },
     });
 

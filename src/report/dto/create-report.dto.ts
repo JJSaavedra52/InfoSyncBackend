@@ -55,6 +55,13 @@ export class CreateReportDto {
     | 'Impersonation'
     | 'Privacy';
 
+  @ApiProperty({
+    example: 'Pending',
+    enum: ['Pending', 'Resolved', 'Dismissed'],
+    required: false,
+  })
+  state?: 'Pending' | 'Resolved' | 'Dismissed';
+
   @ApiProperty({ example: 'This post is inappropriate.' })
   reviewDescription?: string; // reporter-provided text
 }

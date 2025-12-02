@@ -14,7 +14,7 @@ export class Report {
   @Column()
   targetId: string; // The ID of the post, comment, or subcomment
 
-  @Column()
+  @Column({ default: 'Pending' })
   state: 'Pending' | 'Resolved' | 'Dismissed';
 
   @Column()
@@ -42,7 +42,4 @@ export class Report {
 
   @Column({ nullable: true })
   reviewedAt?: Date;
-
-  @Column({ default: 'open' })
-  status?: string; // 'open' | 'resolved' | etc.
 }
