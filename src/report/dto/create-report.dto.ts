@@ -54,4 +54,7 @@ export class CreateReportDto {
     | 'Copyright'
     | 'Impersonation'
     | 'Privacy';
+
+  @ApiProperty({ example: 'This post is inappropriate.' })
+  reviewDescription?: string; // reporter-provided text
 }

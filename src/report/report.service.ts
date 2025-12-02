@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Report } from './entity/report.entity';
@@ -24,8 +28,8 @@ export class ReportService {
 
     const newReport = this.reportRepository.create({
       ...createReportDto,
-      state: 'Pending', // Default state
       createdAt: new Date(),
+      status: 'open',
     });
     return await this.reportRepository.save(newReport);
   }
@@ -75,5 +79,27 @@ export class ReportService {
 
     await this.reportRepository.delete({ _id: new ObjectId(id) } as any);
     return { message: `Report ${id} deleted` };
+  }
+
+  async resolveReport(
+    reportId: string,
+    reviewerName: string,
+    reviewDescription?: string,
+  ) {
+    const q = { _id: new ObjectId(reportId) } as any;
+    const existing = await this.reportRepository.findOne({ where: q });
+    if (!existing) throw new NotFoundException('Report not found');
+
+    await this.reportRepository.updateOne(q, {
+      $set: {
+        reviewedBy: reviewerName,
+        reviewedAt: new Date(),
+        // allow admin to add/replace reviewDescription; if none provided keep existing
+        reviewDescription: reviewDescription ?? existing.reviewDescription,
+        status: 'resolved',
+      },
+    });
+
+    return this.reportRepository.findOne({ where: q });
   }
 }

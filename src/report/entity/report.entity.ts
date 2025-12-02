@@ -34,12 +34,15 @@ export class Report {
   @Column()
   updatedAt: Date;
 
-  @Column()
-  reviewedBy?: string;
+  @Column({ nullable: true })
+  reviewDescription?: string; // optional text from reporter or reviewer
 
-  @Column()
-  reviewDescription?: string; // Optional admin review details
+  @Column({ nullable: true })
+  reviewedBy?: string; // store reviewer display name (admin)
 
-  @Column()
-  resolvedAt?: Date;
+  @Column({ nullable: true })
+  reviewedAt?: Date;
+
+  @Column({ default: 'open' })
+  status?: string; // 'open' | 'resolved' | etc.
 }

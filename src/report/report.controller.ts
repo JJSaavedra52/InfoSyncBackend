@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
@@ -34,7 +35,10 @@ export class ReportController {
     description:
       'Requires Authorization header: Bearer your_jwt_token. Both students and admins can create reports.',
   })
-  async create(@Body() createReportDto: CreateReportDto) {
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() createReportDto: CreateReportDto, @Req() req) {
+    // ensure reporter userId comes from token (avoid spoofing)
+    createReportDto.userId = createReportDto.userId ?? req.user.userId;
     await this.reportValidationService.validateTargetExists(
       createReportDto.targetType,
       createReportDto.targetId,
@@ -62,6 +66,27 @@ export class ReportController {
   async findOne(@Param('id') id: string, @Req() req) {
     await this.reportValidationService.validateAdmin(req.user.userId);
     return this.reportService.findOne(id, req.user.userId);
+  }
+
+  // PATCH /report/:id/resolve  (requires auth)
+  @Patch(':id/resolve')
+  @UseGuards(JwtAuthGuard)
+  async resolveReport(
+    @Param('id') id: string,
+    @Body() body: { reviewDescription?: string },
+    @Req() req,
+  ) {
+    // prefer readable name fields, fallback to userId
+    const reviewerName =
+      req.user?.name ??
+      req.user?.username ??
+      req.user?.fullName ??
+      req.user?.userId;
+    return this.reportService.resolveReport(
+      id,
+      reviewerName,
+      body.reviewDescription,
+    );
   }
 
   @Patch(':id')
