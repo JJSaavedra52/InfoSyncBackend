@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -76,12 +77,13 @@ export class ReportController {
     @Body() body: { reviewDescription?: string },
     @Req() req,
   ) {
-    // prefer readable name fields, fallback to userId
+    const adminUserId = req.user?.userId;
+    await this.reportValidationService.validateUserExists(adminUserId);
+    await this.reportValidationService.validateAdmin(adminUserId);
+
     const reviewerName =
-      req.user?.name ??
-      req.user?.username ??
-      req.user?.fullName ??
-      req.user?.userId;
+      req.user?.name ?? req.user?.username ?? req.user?.fullName ?? adminUserId;
+
     return this.reportService.resolveReport(
       id,
       reviewerName,
@@ -93,7 +95,7 @@ export class ReportController {
   @ApiOperation({
     summary: 'Update a report',
     description:
-      'Requires Authorization header: Bearer your_jwt_token. Only admins can update. You must send userId in the body.',
+      'Requires Authorization header: Bearer your_jwt_token. Only admins can update. You must send userId in the body, or the admin token will be used.',
   })
   @ApiBody({
     schema: {
@@ -106,19 +108,23 @@ export class ReportController {
           example: 'Reviewed and resolved.',
         },
       },
-      required: ['userId', 'state'],
+      required: ['state'],
     },
   })
   async update(
     @Param('id') id: string,
     @Body() updateReportDto: UpdateReportDto,
+    @Req() req,
   ) {
-    if (!updateReportDto.userId) {
-      throw new BadRequestException(
-        'userId (admin) is required to update a report',
-      );
-    }
-    await this.reportValidationService.validateAdmin(updateReportDto.userId);
+    // Use the authenticated user as the admin performing the action
+    const adminUserId = req.user?.userId;
+    await this.reportValidationService.validateUserExists(adminUserId);
+    await this.reportValidationService.validateAdmin(adminUserId);
+
+    // Set reviewedBy to a human-readable name from the token (fallback to id)
+    updateReportDto.reviewedBy =
+      req.user?.name ?? req.user?.username ?? req.user?.fullName ?? adminUserId;
+
     return this.reportService.update(id, updateReportDto);
   }
 
