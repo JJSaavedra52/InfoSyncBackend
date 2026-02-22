@@ -117,18 +117,9 @@ export class ReportController {
   @ApiOperation({
     summary: 'Delete a report',
     description:
-      'Requires Authorization header: Bearer your_jwt_token. Only admins can delete. You must send userId in the body.',
+      'Requires Authorization header: Bearer your_jwt_token. Only admins can delete.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: 'adminUserId123' },
-      },
-      required: ['userId'],
-    },
-  })
-  async remove(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.reportService.remove(id, userId);
+  async remove(@Param('id') id: string, @Req() req) {
+    return this.reportService.remove(id, req.user.userId as string);
   }
 }

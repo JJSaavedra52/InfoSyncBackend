@@ -8,6 +8,7 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
   HttpCode,
   UploadedFiles,
   UseInterceptors,
@@ -20,7 +21,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @Controller('post')
@@ -135,20 +136,11 @@ export class PostController {
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete a post',
-    description: 'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
-      },
-      required: ['userId'],
-    },
+    description: 'Requires header: Authorization = Bearer your_jwt_token.',
   })
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.postService.remove(id, userId);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.postService.remove(id, req.user.userId as string);
   }
 
   @Post(':id/like')

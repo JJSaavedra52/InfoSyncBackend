@@ -11,6 +11,7 @@ import {
   Delete,
   UseGuards,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -18,7 +19,7 @@ import { CreateSubCommentDto } from './dto/create-subcomment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentValidationService } from './validators/comment-validation.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @Controller('comment')
@@ -80,20 +81,14 @@ export class CommentController {
   @ApiOperation({
     summary: 'Delete a comment',
     description:
-      'Only the creator or admin can delete. Requires Authorization header: Bearer [JWT]. You must send userId in the body.',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
-      },
-      required: ['userId'],
-    },
+      'Only the creator or admin can delete. Requires Authorization header: Bearer [JWT].',
   })
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id') id: string, @Body('userId') userId: string) {
-    await this.commentValidationService.validateCommentDelete(id, userId);
+  async remove(@Param('id') id: string, @Req() req) {
+    await this.commentValidationService.validateCommentDelete(
+      id,
+      req.user.userId as string,
+    );
     return this.commentService.remove(id);
   }
 
@@ -117,27 +112,18 @@ export class CommentController {
   @ApiOperation({
     summary: 'Delete a subcomment',
     description:
-      'Only the creator or admin can delete. Requires Authorization header: Bearer [JWT]. You must send userId in the body.',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
-      },
-      required: ['userId'],
-    },
+      'Only the creator or admin can delete. Requires Authorization header: Bearer [JWT].',
   })
   @UseGuards(JwtAuthGuard)
   async removeSubComment(
     @Param('commentId') commentId: string,
     @Param('subCommentId') subCommentId: string,
-    @Body('userId') userId: string,
+    @Req() req,
   ) {
     await this.commentValidationService.validateSubCommentDelete(
       commentId,
       subCommentId,
-      userId,
+      req.user.userId as string,
     );
     return this.commentService.removeSubComment(commentId, subCommentId);
   }
