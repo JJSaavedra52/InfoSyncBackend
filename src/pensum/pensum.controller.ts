@@ -4,6 +4,7 @@ import {
   Post,
   Param,
   Body,
+  Req,
   HttpCode,
   Patch,
   Delete,
@@ -14,7 +15,7 @@ import { CreatePensumDto } from './dto/createPensum.dto';
 import { UpdatePensumDto } from './dto/updatePensum.dto';
 import { AddCourseDto } from './dto/addCourse.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -65,19 +66,10 @@ export class PensumController {
   @ApiOperation({
     summary: 'Delete a pensum',
     description:
-      'Requires header: Authorization = Bearer your_jwt_token. You must send userId in the body.',
+      'Requires header: Authorization = Bearer your_jwt_token.',
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string', example: '64f8a1234567890abcdef123' },
-      },
-      required: ['userId'],
-    },
-  })
-  async delete(@Param('id') id: string, @Body('userId') userId: string) {
-    return this.pensumService.delete(id, userId);
+  async delete(@Param('id') id: string, @Req() req) {
+    return this.pensumService.delete(id, req.user.userId as string);
   }
 
   // ********Course management endpoints**********
